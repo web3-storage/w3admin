@@ -6,7 +6,7 @@ export function useSpaceInfo (did: string) {
     return {
       allocated: 345093845,
       total: 1000000000,
-      subscription: 'did:mailto:travis@example.com',
+      subscription: 'did:mailto:example.com:travis',
       blocked: false
     }
   })

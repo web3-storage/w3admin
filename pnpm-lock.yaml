@@ -6,6 +6,7 @@ specifiers:
   '@types/node': 20.2.4
   '@types/react': 18.2.7
   '@types/react-dom': 18.2.4
+  '@web3-storage/did-mailto': ^2.0.0
   autoprefixer: 10.4.14
   eslint: 8.41.0
   eslint-config-next: 13.4.4
@@ -23,6 +24,7 @@ dependencies:
   '@types/node': 20.2.4
   '@types/react': 18.2.7
   '@types/react-dom': 18.2.4
+  '@web3-storage/did-mailto': 2.0.0
   autoprefixer: 10.4.14_postcss@8.4.23
   eslint: 8.41.0
   eslint-config-next: 13.4.4_opaykosi7ysrbskpnffskmbrki
@@ -383,6 +385,11 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.59.7
       eslint-visitor-keys: 3.4.1
+    dev: false
+
+  /@web3-storage/did-mailto/2.0.0:
+    resolution: {integrity: sha512-y0uWnAG6V0PmKCPQdiSc8eR+yOpj3kyRqlm4ByNZcYd/HUT5t9UzUFMBO7hks14JOTUbV2bphHMToBS9u+f1GQ==}
+    engines: {node: '>=16.15'}
     dev: false
 
   /acorn-jsx/5.3.2_acorn@8.8.2:
