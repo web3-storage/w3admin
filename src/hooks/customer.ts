@@ -1,10 +1,14 @@
 import useSWR from 'swr'
 
-export function useCustomerInfo(did: string) {
-  return useSWR(['/customer', did], ([, did]: [never, string]) => {
+export function useCustomerInfo (did: string | undefined) {
+  return useSWR(['/customer', did], ([, did]: [never, string | undefined]) => {
     // TODO invoke customer/info UCAN
-    return {
-      subscriptions: ['did:mailto:example.com:travis']
+    if (did) {
+      return {
+        subscriptions: ['did:mailto:example.com:travis']
+      }
+    } else {
+      return null
     }
   })
 }
