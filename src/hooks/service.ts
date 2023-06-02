@@ -48,6 +48,11 @@ const customers: Record<string, Customer> = {
     did: 'did:mailto:example.com:travis',
     subscriptions: ['did:mailto:example.com:travis'],
     blocked: false
+  },
+  'did:mailto:dag.house:travis': {
+    did: 'did:mailto:dag.house:travis',
+    subscriptions: ['did:mailto:dag.house:travis'],
+    blocked: false
   }
 }
 
