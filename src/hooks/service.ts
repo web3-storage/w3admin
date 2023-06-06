@@ -7,6 +7,8 @@ import * as CAR from '@ucanto/transport/car'
 import * as Ucanto from '@ucanto/interface'
 import { Customer as CapCustomer } from '@web3-storage/capabilities'
 import * as LocalCustomer from '@/capabilities/customer'
+import { webDidFromMailtoDid } from '@/util/did'
+
 const Customer = { ...LocalCustomer, ...CapCustomer }
 
 export type AccountDID = DID<'mailto'>
@@ -17,13 +19,16 @@ export type Customer = {
   did: AccountDID
   subscriptions: string[]
   blocked: boolean
+  domainBlocked: boolean
 }
 
 export interface CustomerGetOk {
   customer: null | Customer
 }
 
-export type CustomerBlockError = never
+export interface UnknownDidType extends Ucanto.Failure {}
+
+export type CustomerBlockError = UnknownDidType
 
 export interface CustomerBlockOk {
 }
@@ -43,17 +48,26 @@ interface Service {
   }
 }
 
-const customers: Record<string, Customer> = {
+type CustomerRecord = Pick<Customer, 'did' | 'subscriptions' | 'blocked'>
+
+const customers: Record<string, CustomerRecord> = {
   'did:mailto:example.com:travis': {
     did: 'did:mailto:example.com:travis',
     subscriptions: ['did:mailto:example.com:travis'],
-    blocked: false
+    blocked: false,
   },
   'did:mailto:dag.house:travis': {
     did: 'did:mailto:dag.house:travis',
     subscriptions: ['did:mailto:dag.house:travis'],
-    blocked: false
-  }
+    blocked: false,
+  },
+}
+
+interface DomainRecord {
+  blocked: boolean
+}
+
+const domains: Record<string, DomainRecord> = {
 }
 
 export async function createServer (id: Ucanto.Signer) {
@@ -63,17 +77,28 @@ export async function createServer (id: Ucanto.Signer) {
       customer: {
         get: Server.provide(Customer.get, async ({ capability }) => {
           const did = capability.nb.customer
+          const domainBlocked = domains[webDidFromMailtoDid(did)]?.blocked
           return {
             ok: {
-              customer: customers[did]
+              customer: { ...customers[did], domainBlocked }
             }
           }
         }),
         block: Server.provide(Customer.block, async ({ capability }) => {
           const did = capability.nb.customer
-          customers[did].blocked = capability.nb.blocked
-          return {
-            ok: {
+          if (did.startsWith('did:mailto')) {
+            customers[did].blocked = capability.nb.blocked
+            return { ok: {} }
+          } else if (did.startsWith('did:web')) {
+            domains[did] ||= { blocked: false }
+            domains[did].blocked = capability.nb.blocked
+            return { ok: {} }
+          } else {
+            return {
+              error: {
+                name: 'UnknownDidType',
+                message: `cannot block ${did}`
+              }
             }
           }
         })

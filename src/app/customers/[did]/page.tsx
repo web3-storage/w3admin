@@ -21,11 +21,11 @@ function mailtoDidFromUrlComponent (urlComponent: string) {
 }
 
 export default function Customer ({ params: { did: encodedDid } }: { params: { did: string } }) {
-  const [domainBlocked, setDomainBlocked] = useState(false)
   const did = mailtoDidFromUrlComponent(encodedDid)
   const { data: customer } = useCustomerInfo(did)
   const emailBlocked = customer?.blocked
-  const { setEmailBlocked } = useCustomerActions(did)
+  const domainBlocked = customer?.domainBlocked
+  const { setEmailBlocked, setDomainBlocked } = useCustomerActions(did)
   if (did) {
     const email = DidMailto.toEmail(did)
     const domain = domainFromEmail(email)

@@ -3,20 +3,22 @@ import { DID, Signer } from '@ucanto/interface'
 import { useAgent, useClient } from './service'
 import { Customer as CapCustomer } from '@web3-storage/capabilities'
 import * as LocalCustomer from '@/capabilities/customer'
+import { webDidFromMailtoDid } from '../util/did'
+
 const Customer = { ...LocalCustomer, ...CapCustomer }
 
-export function useCustomerActions (did: string | undefined) {
+export function useCustomerActions (did: DID<'mailto'> | undefined) {
   const client = useClient()
   const { mutate } = useSWRConfig()
 
-  async function setEmailBlocked (blocked: boolean) {
+  async function setBlocked (didToBlock: DID<'mailto' | 'web'>, blocked: boolean) {
     if (did && client) {
       const result = await Customer.block.invoke({
         issuer: client.id as Signer,
         audience: client.id,
         with: client.id.did() as DID<'web'>,
         nb: {
-          customer: did as DID<'mailto'>,
+          customer: didToBlock,
           blocked
         }
       }).execute(client)
@@ -28,7 +30,12 @@ export function useCustomerActions (did: string | undefined) {
     }
   }
 
-  return { setEmailBlocked }
+  const setEmailBlocked = (blocked: boolean) =>
+    did && setBlocked(did, blocked)
+  const setDomainBlocked = (blocked: boolean) =>
+    did && setBlocked(webDidFromMailtoDid(did), blocked)
+
+  return { setEmailBlocked, setDomainBlocked }
 }
 
 export function useCustomerInfo (did: string | undefined) {

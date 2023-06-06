@@ -1,4 +1,4 @@
-import { capability, struct, ok, Schema } from '@ucanto/validator'
+import { capability, struct, ok, Schema, DID } from '@ucanto/validator'
 import { Utils, Customer } from '@web3-storage/capabilities'
 
 const { equal, equalWith, and } = Utils
@@ -8,7 +8,7 @@ export const block = capability({
   can: 'customer/block',
   with: ProviderDID,
   nb: struct({
-    customer: AccountDID,
+    customer: Schema.or(AccountDID, DID.match({ method: 'web' })),
     blocked: Schema.boolean()
   }),
   derives: (child, parent) => {
