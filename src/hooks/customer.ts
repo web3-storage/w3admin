@@ -1,6 +1,6 @@
 import useSWR, { useSWRConfig } from 'swr'
 import { DID, Signer } from '@ucanto/interface'
-import { useAgent, useClient } from './service'
+import { useClient } from './service'
 import { Customer as CapCustomer } from '@web3-storage/capabilities'
 import * as LocalCustomer from '@/capabilities/customer'
 import { webDidFromMailtoDid } from '../util/did'

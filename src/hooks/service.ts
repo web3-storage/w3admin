@@ -5,9 +5,10 @@ import * as Client from '@ucanto/client'
 import * as Signer from '@ucanto/principal/ed25519'
 import * as CAR from '@ucanto/transport/car'
 import * as Ucanto from '@ucanto/interface'
-import { Customer as CapCustomer } from '@web3-storage/capabilities'
+import { Customer as CapCustomer, Space } from '@web3-storage/capabilities'
 import * as LocalCustomer from '@/capabilities/customer'
 import { webDidFromMailtoDid } from '@/util/did'
+import { spaceOneDid } from '@/util/spaces'
 
 const Customer = { ...LocalCustomer, ...CapCustomer }
 
@@ -33,6 +34,20 @@ export type CustomerBlockError = UnknownDidType
 export interface CustomerBlockOk {
 }
 
+export interface SpaceInfoRecord {
+  did: Ucanto.DIDKey
+  allocated: number
+  total: number
+  subscription: DID<'mailto'>
+  blocked: boolean
+}
+
+export interface SpaceNotFound extends Ucanto.Failure {}
+
+export type SpaceInfoOk = SpaceInfoRecord
+
+export type SpaceInfoError = SpaceNotFound
+
 interface Service {
   customer: {
     get: ServiceMethod<
@@ -45,12 +60,19 @@ interface Service {
       CustomerBlockOk,
       CustomerBlockError
     >
+  },
+  space: {
+    info: ServiceMethod<
+      InferInvokedCapability<typeof Space.info>,
+      SpaceInfoOk,
+      SpaceInfoError
+    >
   }
 }
 
-type CustomerRecord = Pick<Customer, 'did' | 'subscriptions' | 'blocked'>
+type CustomerRow = Pick<Customer, 'did' | 'subscriptions' | 'blocked'>
 
-const customers: Record<string, CustomerRecord> = {
+const customers: Record<string, CustomerRow> = {
   'did:mailto:example.com:travis': {
     did: 'did:mailto:example.com:travis',
     subscriptions: ['did:mailto:example.com:travis'],
@@ -63,11 +85,29 @@ const customers: Record<string, CustomerRecord> = {
   },
 }
 
-interface DomainRecord {
+interface DomainRow {
   blocked: boolean
 }
 
-const domains: Record<string, DomainRecord> = {
+const domains: Record<string, DomainRow> = {
+}
+
+interface SpaceRow {
+  allocated: number
+  total: number
+  subscription: DID<'mailto'>
+  blocked: boolean
+}
+
+
+
+const spaces: Record<string, SpaceRow> = {
+  [spaceOneDid]: {
+    allocated: 345093845,
+    total: 1000000000,
+    subscription: 'did:mailto:example.com:travis',
+    blocked: false
+  }
 }
 
 export async function createServer (id: Ucanto.Signer) {
@@ -100,6 +140,20 @@ export async function createServer (id: Ucanto.Signer) {
                 message: `cannot block ${did}`
               }
             }
+          }
+        })
+      },
+      space: {
+        info: Server.provide(Space.info, async ({ capability }) => {
+          const space = spaces[capability.with]
+          if (space) {
+            return { ok: { did: capability.with, ...spaces[capability.with] } }
+          } else {
+            return { error: {
+              name: 'SpaceNotFound',
+              message: `could not find space with did ${capability.with}`
+            }
+           }
           }
         })
       }

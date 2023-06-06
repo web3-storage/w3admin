@@ -1,3 +1,4 @@
+import { spaceOneDid } from '@/util/spaces'
 import useSWR from 'swr'
 
 export function useSubscriptionInfo (did: string | undefined) {
@@ -6,7 +7,7 @@ export function useSubscriptionInfo (did: string | undefined) {
     if (did) {
       return {
         customer: 'did:mailto:example.com:travis',
-        consumer: 'did:key:z6Mko9iikCuip4SE6A2iD2s21UkcxZZkjxTzzE4PhhcED3gn'
+        consumer: spaceOneDid
       }
     } else {
       return null
