@@ -19,4 +19,4 @@ export const get = capability({
   },
 })
 
-export default { get } 
+export const Subscription = { get }

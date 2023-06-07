@@ -5,14 +5,11 @@ import * as Client from '@ucanto/client'
 import * as Signer from '@ucanto/principal/ed25519'
 import * as CAR from '@ucanto/transport/car'
 import * as Ucanto from '@ucanto/interface'
-import { Customer as CapCustomer } from '@web3-storage/capabilities'
-import * as LocalCustomer from '@/capabilities/customer'
-import Space from '@/capabilities/space'
-import Subscription from '@/capabilities/subscription'
+import { Space } from '@/capabilities/space'
+import { Subscription } from '@/capabilities/subscription'
+import { Customer } from '@/capabilities/customer'
 import { webDidFromMailtoDid } from '@/util/did'
 import { spaceOneDid, spaceTwoDid } from '@/util/spaces'
-
-const Customer = { ...LocalCustomer, ...CapCustomer }
 
 export type AccountDID = DID<'mailto'>
 

@@ -1,7 +1,7 @@
 import { capability, struct, ok, Schema } from '@ucanto/validator'
 import { Utils, Customer } from '@web3-storage/capabilities'
 import { SpaceDID } from '@web3-storage/capabilities/space'
-import { Space } from '@web3-storage/capabilities'
+import { Space as UpstreamSpace } from '@web3-storage/capabilities'
 
 const { equal, equalWith, and } = Utils
 const { ProviderDID } = Customer
@@ -22,4 +22,4 @@ export const block = capability({
   },
 })
 
-export default { ...Space, block } 
+export const Space = { ...UpstreamSpace, block } 

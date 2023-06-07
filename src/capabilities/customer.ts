@@ -1,8 +1,8 @@
 import { capability, struct, ok, Schema, DID } from '@ucanto/validator'
-import { Utils, Customer } from '@web3-storage/capabilities'
+import { Utils, Customer as UpstreamCustomer } from '@web3-storage/capabilities'
 
 const { equal, equalWith, and } = Utils
-const { AccountDID, ProviderDID } = Customer
+const { AccountDID, ProviderDID } = UpstreamCustomer
 
 export const block = capability({
   can: 'customer/block',
@@ -19,3 +19,5 @@ export const block = capability({
     )
   },
 })
+
+export const Customer = { ...UpstreamCustomer, block }

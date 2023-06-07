@@ -1,5 +1,5 @@
 import useSWR, { useSWRConfig } from 'swr'
-import Space from '@/capabilities/space'
+import { Space } from '@/capabilities/space'
 import { DID, DIDKey, Signer } from '@ucanto/interface'
 import { spaceOne, spaceTwo, spacesByPublicKey } from '@/util/spaces'
 import { useClient } from './service'

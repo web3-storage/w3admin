@@ -1,11 +1,8 @@
 import useSWR, { useSWRConfig } from 'swr'
 import { DID, Signer } from '@ucanto/interface'
-import { Customer as CapCustomer } from '@web3-storage/capabilities'
-import * as LocalCustomer from '@/capabilities/customer'
+import { Customer } from '@/capabilities/customer'
 import { useClient } from './service'
 import { webDidFromMailtoDid } from '../util/did'
-
-const Customer = { ...LocalCustomer, ...CapCustomer }
 
 export function useCustomerActions (did: DID<'mailto'> | undefined) {
   const client = useClient()

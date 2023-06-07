@@ -1,6 +1,6 @@
 import useSWR from 'swr'
 import { useClient } from './service'
-import Subscription from '@/capabilities/subscription'
+import { Subscription } from '@/capabilities/subscription'
 import { Signer, DID } from '@ucanto/interface'
 
 export function useSubscriptionInfo (id: string | undefined) {
