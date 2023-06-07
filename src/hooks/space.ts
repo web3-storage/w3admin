@@ -23,6 +23,7 @@ export function useSpaceActions (did: DIDKey | undefined) {
         mutate(['space/info', did])
       } else {
         console.error('Space.block failed:', result.out.error)
+        throw result.out.error
       }
     }
   }
@@ -33,7 +34,7 @@ export function useSpaceInfo (did: DIDKey | undefined) {
   const client = useClient()
   return useSWR((did && client) ? ['space/info', did] : null,
     async ([, did]: [never, DID<'key'> | undefined]) => {
-      if (did && client) {
+      if (did && client && spacesByPublicKey[did]) {
         const result = await Space.info.invoke({
           issuer: spacesByPublicKey[did],
           audience: client.id,
@@ -43,7 +44,7 @@ export function useSpaceInfo (did: DIDKey | undefined) {
           return result.out.ok
         } else {
           console.error('Space.info failed:', result.out.error)
-          return null
+          throw result.out.error
         }
       } else {
         return null

@@ -7,7 +7,7 @@ import { useState } from "react"
 
 export default function Space ({ params: { did: encodedDid } }: { params: { did: string } }) {
   const did = decodeURIComponent(encodedDid)
-  const { data: space, isLoading } = useSpaceInfo(did as DIDKey)
+  const { data: space, error } = useSpaceInfo(did as DIDKey)
   const blocked = space?.blocked
   const { setBlocked } = useSpaceActions(did as DIDKey)
   return (
@@ -45,8 +45,8 @@ export default function Space ({ params: { did: encodedDid } }: { params: { did:
           </table>
         </>
       )}
-      {!space && !isLoading && (
-        <h3 className='text-lg'>we don't know anything about {did}</h3>
+      {error && (
+        <h3 className='text-lg'>{error.message}</h3>
       )}
     </div>
   )
