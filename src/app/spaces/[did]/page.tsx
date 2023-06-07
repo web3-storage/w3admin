@@ -3,7 +3,6 @@
 import { useSpaceActions, useSpaceInfo } from "@/hooks/space"
 import { DIDKey } from "@ucanto/interface"
 import Link from "next/link"
-import { useState } from "react"
 
 export default function Space ({ params: { did: encodedDid } }: { params: { did: string } }) {
   const did = decodeURIComponent(encodedDid)
