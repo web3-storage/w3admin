@@ -13,7 +13,9 @@ import { spaceOneDid, spaceTwoDid } from '@/util/spaces'
 
 export type AccountDID = DID<'mailto'>
 
-export type CustomerGetError = never
+export interface CustomerNotFound extends Ucanto.Failure {}
+
+export type CustomerGetError = CustomerNotFound
 
 export type Customer = {
   did: AccountDID
@@ -47,7 +49,7 @@ export type SpaceInfoOk = SpaceInfoRecord
 export type SpaceInfoError = SpaceNotFound
 
 export type SpaceBlockOk = {}
-export type SpaceBlockError = Ucanto.Failure
+export type SpaceBlockError = SpaceNotFound
 
 export interface SubscriptionNotFound extends Ucanto.Failure {}
 export interface SubscriptionGetOk {
@@ -145,7 +147,7 @@ const subscriptions: Record<string, SubscriptionRow> = {
   'did:mailto:example.com:travis@test': {
     customer: 'did:mailto:example.com:travis',
     consumer: spaceOneDid
-  }, 
+  },
   'did:mailto:dag.house:travis@test': {
     customer: 'did:mailto:dag.house:travis',
     consumer: spaceTwoDid
@@ -160,9 +162,18 @@ export async function createServer (id: Ucanto.Signer) {
         get: Server.provide(Customer.get, async ({ capability }) => {
           const did = capability.nb.customer
           const domainBlocked = domains[webDidFromMailtoDid(did)]?.blocked
-          return {
-            ok: {
-              customer: { ...customers[did], domainBlocked }
+          if (customers[did]) {
+            return {
+              ok: {
+                customer: { ...customers[did], domainBlocked }
+              }
+            }
+          } else {
+            return {
+              error: {
+                name: 'CustomerNotFound',
+                message: `could not find ${did}`
+              }
             }
           }
         }),
@@ -215,7 +226,7 @@ export async function createServer (id: Ucanto.Signer) {
       },
       subscription: {
         get: Server.provide(Subscription.get, async ({ capability }) => {
-          if (subscriptions[capability.nb.subscription]){
+          if (subscriptions[capability.nb.subscription]) {
             return {
               ok: subscriptions[capability.nb.subscription]
             }
