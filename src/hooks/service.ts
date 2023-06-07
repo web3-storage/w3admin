@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ServiceMethod, DID, InferInvokedCapability } from '@ucanto/interface'
+import { ServiceMethod, DID, DIDKey, InferInvokedCapability } from '@ucanto/interface'
 import * as Server from '@ucanto/server'
 import * as Client from '@ucanto/client'
 import * as Signer from '@ucanto/principal/ed25519'
@@ -8,8 +8,9 @@ import * as Ucanto from '@ucanto/interface'
 import { Customer as CapCustomer } from '@web3-storage/capabilities'
 import * as LocalCustomer from '@/capabilities/customer'
 import Space from '@/capabilities/space'
+import Subscription from '@/capabilities/subscription'
 import { webDidFromMailtoDid } from '@/util/did'
-import { spaceOneDid } from '@/util/spaces'
+import { spaceOneDid, spaceTwoDid } from '@/util/spaces'
 
 const Customer = { ...LocalCustomer, ...CapCustomer }
 
@@ -51,6 +52,14 @@ export type SpaceInfoError = SpaceNotFound
 export type SpaceBlockOk = {}
 export type SpaceBlockError = Ucanto.Failure
 
+export interface SubscriptionNotFound extends Ucanto.Failure {}
+export interface SubscriptionGetOk {
+  customer: DID<'mailto'>
+  consumer: DIDKey
+}
+
+export type SubscriptionGetError = SubscriptionNotFound
+
 interface Service {
   customer: {
     get: ServiceMethod<
@@ -75,6 +84,13 @@ interface Service {
       SpaceBlockOk,
       SpaceBlockError
     >
+  },
+  subscription: {
+    get: ServiceMethod<
+      InferInvokedCapability<typeof Subscription.get>,
+      SubscriptionGetOk,
+      SubscriptionGetError
+    >
   }
 }
 
@@ -83,12 +99,12 @@ type CustomerRow = Pick<Customer, 'did' | 'subscriptions' | 'blocked'>
 const customers: Record<string, CustomerRow> = {
   'did:mailto:example.com:travis': {
     did: 'did:mailto:example.com:travis',
-    subscriptions: ['did:mailto:example.com:travis'],
+    subscriptions: ['did:mailto:example.com:travis@test'],
     blocked: false,
   },
   'did:mailto:dag.house:travis': {
     did: 'did:mailto:dag.house:travis',
-    subscriptions: ['did:mailto:dag.house:travis'],
+    subscriptions: ['did:mailto:dag.house:travis@test'],
     blocked: false,
   },
 }
@@ -111,8 +127,31 @@ const spaces: Record<string, SpaceRow> = {
   [spaceOneDid]: {
     allocated: 345093845,
     total: 1000000000,
-    subscription: 'did:mailto:example.com:travis',
+    subscription: 'did:mailto:example.com:travis@test',
     blocked: false
+  },
+
+  [spaceTwoDid]: {
+    allocated: 9386794576,
+    total: 1500000000,
+    subscription: 'did:mailto:dag.house:travis@test',
+    blocked: false
+  }
+}
+
+interface SubscriptionRow {
+  customer: DID<'mailto'>
+  consumer: DIDKey
+}
+
+const subscriptions: Record<string, SubscriptionRow> = {
+  'did:mailto:example.com:travis@test': {
+    customer: 'did:mailto:example.com:travis',
+    consumer: spaceOneDid
+  }, 
+  'did:mailto:dag.house:travis@test': {
+    customer: 'did:mailto:dag.house:travis',
+    consumer: spaceTwoDid
   }
 }
 
@@ -172,6 +211,22 @@ export async function createServer (id: Ucanto.Signer) {
               error: {
                 name: 'SpaceNotFound',
                 message: `could not find space with did ${capability.with}`
+              }
+            }
+          }
+        })
+      },
+      subscription: {
+        get: Server.provide(Subscription.get, async ({ capability }) => {
+          if (subscriptions[capability.nb.subscription]){
+            return {
+              ok: subscriptions[capability.nb.subscription]
+            }
+          } else {
+            return {
+              error: {
+                name: 'SubscriptionNotFound',
+                message: `could not find subscription with id ${capability.nb.subscription}`
               }
             }
           }

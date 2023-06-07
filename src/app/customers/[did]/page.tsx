@@ -5,7 +5,6 @@ import { notFound } from "next/navigation"
 import * as DidMailto from '@web3-storage/did-mailto'
 
 import { useCustomerActions, useCustomerInfo } from "@/hooks/customer"
-import { useState } from "react"
 
 function domainFromEmail (email: string) {
   const ind = email.indexOf('@')
