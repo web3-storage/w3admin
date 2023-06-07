@@ -1,14 +1,15 @@
 'use client'
 
-import { useSpaceInfo } from "@/hooks/space"
+import { useSpaceActions, useSpaceInfo } from "@/hooks/space"
 import { DIDKey } from "@ucanto/interface"
 import Link from "next/link"
 import { useState } from "react"
 
 export default function Space ({ params: { did: encodedDid } }: { params: { did: string } }) {
-  const [blocked, setBlocked] = useState(false)
   const did = decodeURIComponent(encodedDid)
   const { data: space, isLoading } = useSpaceInfo(did as DIDKey)
+  const blocked = space?.blocked
+  const { setBlocked } = useSpaceActions(did as DIDKey)
   return (
     <div className='flex flex-col items-center'>
       <h2 className='text-2xl mb-4'>Space {did}</h2>

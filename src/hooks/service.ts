@@ -5,8 +5,9 @@ import * as Client from '@ucanto/client'
 import * as Signer from '@ucanto/principal/ed25519'
 import * as CAR from '@ucanto/transport/car'
 import * as Ucanto from '@ucanto/interface'
-import { Customer as CapCustomer, Space } from '@web3-storage/capabilities'
+import { Customer as CapCustomer } from '@web3-storage/capabilities'
 import * as LocalCustomer from '@/capabilities/customer'
+import Space from '@/capabilities/space'
 import { webDidFromMailtoDid } from '@/util/did'
 import { spaceOneDid } from '@/util/spaces'
 
@@ -45,8 +46,10 @@ export interface SpaceInfoRecord {
 export interface SpaceNotFound extends Ucanto.Failure {}
 
 export type SpaceInfoOk = SpaceInfoRecord
-
 export type SpaceInfoError = SpaceNotFound
+
+export type SpaceBlockOk = {}
+export type SpaceBlockError = Ucanto.Failure
 
 interface Service {
   customer: {
@@ -66,6 +69,11 @@ interface Service {
       InferInvokedCapability<typeof Space.info>,
       SpaceInfoOk,
       SpaceInfoError
+    >,
+    block: ServiceMethod<
+      InferInvokedCapability<typeof Space.block>,
+      SpaceBlockOk,
+      SpaceBlockError
     >
   }
 }
@@ -98,8 +106,6 @@ interface SpaceRow {
   subscription: DID<'mailto'>
   blocked: boolean
 }
-
-
 
 const spaces: Record<string, SpaceRow> = {
   [spaceOneDid]: {
@@ -149,11 +155,25 @@ export async function createServer (id: Ucanto.Signer) {
           if (space) {
             return { ok: { did: capability.with, ...spaces[capability.with] } }
           } else {
-            return { error: {
-              name: 'SpaceNotFound',
-              message: `could not find space with did ${capability.with}`
+            return {
+              error: {
+                name: 'SpaceNotFound',
+                message: `could not find space with did ${capability.with}`
+              }
             }
-           }
+          }
+        }),
+        block: Server.provide(Space.block, async ({ capability }) => {
+          if (spaces[capability.nb.space]) {
+            spaces[capability.nb.space].blocked = capability.nb.blocked
+            return { ok: {} }
+          } else {
+            return {
+              error: {
+                name: 'SpaceNotFound',
+                message: `could not find space with did ${capability.with}`
+              }
+            }
           }
         })
       }
