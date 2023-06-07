@@ -3,7 +3,7 @@ import { useClient } from './service'
 import { Subscription } from '@/capabilities/subscription'
 import { Signer, DID } from '@ucanto/interface'
 
-export function useSubscriptionInfo (id: string | undefined) {
+export function useSubscription (id: string | undefined) {
   const client = useClient()
   return useSWR((id && client) ? ['subscription/get', id] : null,
     async ([, id]: [never, string | undefined]) => {

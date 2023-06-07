@@ -35,7 +35,7 @@ export function useCustomerActions (did: DID<'mailto'> | undefined) {
   return { setEmailBlocked, setDomainBlocked }
 }
 
-export function useCustomerInfo (did: string | undefined) {
+export function useCustomer (did: string | undefined) {
   const client = useClient()
   return useSWR(
     (did && client) ? ['customer/get', did] : null,

@@ -1,11 +1,11 @@
 'use client'
 
-import { useSubscriptionInfo } from "@/hooks/subscription"
+import { useSubscription } from "@/hooks/subscription"
 import Link from "next/link"
 
 export default function Subscription ({ params: { id: encodedId } }: { params: { id: string } }) {
   const id = decodeURIComponent(encodedId)
-  const { data: subscription } = useSubscriptionInfo(id)
+  const { data: subscription } = useSubscription(id)
   return (
     <div className='flex flex-col items-center'>
       <h2 className='text-2xl mb-4'>Subscription {id}</h2>

@@ -4,7 +4,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import * as DidMailto from '@web3-storage/did-mailto'
 
-import { useCustomerActions, useCustomerInfo } from "@/hooks/customer"
+import { useCustomerActions, useCustomer } from "@/hooks/customer"
 
 function domainFromEmail (email: string) {
   const ind = email.indexOf('@')
@@ -21,7 +21,7 @@ function mailtoDidFromUrlComponent (urlComponent: string) {
 
 export default function Customer ({ params: { did: encodedDid } }: { params: { did: string } }) {
   const did = mailtoDidFromUrlComponent(encodedDid)
-  const { data: customer } = useCustomerInfo(did)
+  const { data: customer } = useCustomer(did)
   const emailBlocked = customer?.blocked
   const domainBlocked = customer?.domainBlocked
   const { setEmailBlocked, setDomainBlocked } = useCustomerActions(did)
