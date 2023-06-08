@@ -25,3 +25,9 @@ body {
     )
     rgb(var(--background-start-rgb));
 }
+
+@layer components {
+  .btn {
+     @apply rounded bg-gray-500 px-2 py-1 hover:bg-gray-600 active:bg-gray-400;
+  }
+}
