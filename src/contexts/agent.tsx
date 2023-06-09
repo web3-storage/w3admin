@@ -10,8 +10,8 @@ import type { Service } from '@web3-storage/access/types'
 import { Agent } from '@web3-storage/access/agent'
 import { StoreIndexedDB } from '@web3-storage/access/stores/store-indexeddb'
 import * as RSASigner from '@ucanto/principal/rsa'
+import * as Ucanto from '@ucanto/interface'
 
-const DB_NAME = 'w3admin'
 const DB_STORE_NAME = 'keyring'
 
 interface ServiceConfig {
@@ -19,16 +19,19 @@ interface ServiceConfig {
   connection?: ConnectionView<Service>
 }
 
-interface CreateAgentOptions extends ServiceConfig {}
+interface CreateAgentOptions extends ServiceConfig {
+  principal?: Ucanto.Signer<Ucanto.DIDKey>
+  name?: string
+}
 
 /**
  * Create an agent for managing identity. It uses RSA keys that are stored in
  * IndexedDB as unextractable `CryptoKey`s.
  */
-async function createAgent (
-  options: CreateAgentOptions = {}
+export async function createAgent (
+  options: CreateAgentOptions = { name: 'w3admin' }
 ): Promise<Agent> {
-  const dbName = `${DB_NAME}${options.servicePrincipal != null ? '@' + options.servicePrincipal.did() : ''
+  const dbName = `${options.name}${options.servicePrincipal != null ? '@' + options.servicePrincipal.did() : ''
     }`
   const store = new StoreIndexedDB(dbName, {
     dbVersion: 1,
@@ -38,7 +41,7 @@ async function createAgent (
   if (raw != null) {
     return Object.assign(Agent.from(raw, { ...options, store }), { store })
   }
-  const principal = await RSASigner.generate()
+  const principal = options.principal ?? await RSASigner.generate()
   return Object.assign(
     await Agent.create({ principal }, { ...options, store }),
     { store }

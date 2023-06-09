@@ -12,6 +12,8 @@ import { Subscription } from '@/capabilities/subscription'
 import { Customer } from '@/capabilities/customer'
 import { webDidFromMailtoDid } from '@/util/did'
 import { spaceOneDid, spaceTwoDid } from '@/util/spaces'
+import { createAgent } from "./agent"
+import { Agent } from "@web3-storage/access"
 
 export type AccountDID = DID<'mailto'>
 
@@ -248,7 +250,8 @@ export async function createServer (id: Ucanto.Signer) {
 }
 
 interface ServiceContextValue {
-  serverPrincipal?: Ucanto.Signer,
+  agent?: Agent
+  serverPrincipal?: Ucanto.Signer
   server?: Ucanto.ServerView<Service>
 }
 
@@ -257,16 +260,19 @@ export const ServiceContext = createContext<ServiceContextValue>({})
 export function ServiceProvider ({ children }: { children: JSX.Element | JSX.Element[] }) {
   const [serverPrincipal, setServerPrincipal] = useState<Ucanto.Signer>()
   const [server, setServer] = useState<Ucanto.ServerView<Service>>()
+  const [agent, setAgent] = useState<Agent>()
   useEffect(function () {
     async function load () {
-      const id = (await Signer.generate()).withDID('did:web:test.web3.storage')
+      const signer = await Signer.generate()
+      setAgent(await createAgent({ principal: signer, name: 'did:web:test.web3.storage' }))
+      const id = signer.withDID('did:web:test.web3.storage')
       setServerPrincipal(id)
       setServer(await createServer(id))
     }
     load()
   }, [])
   return (
-    <ServiceContext.Provider value={{ serverPrincipal, server }}>
+    <ServiceContext.Provider value={{ agent, serverPrincipal, server }}>
       {children}
     </ServiceContext.Provider>
   )

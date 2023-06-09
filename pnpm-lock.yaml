@@ -23,6 +23,9 @@ dependencies:
   '@ucanto/client':
     specifier: ^8.0.0
     version: 8.0.0
+  '@ucanto/core':
+    specifier: ^8.0.0
+    version: 8.0.0
   '@ucanto/interface':
     specifier: ^8.0.0
     version: 8.0.0
