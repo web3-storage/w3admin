@@ -1,12 +1,12 @@
 'use client'
 
-import { useSpaceActions, useSpaceInfo } from "@/hooks/space"
+import { useSpaceActions, useConsumerGet } from "@/hooks/space"
 import { DIDKey } from "@ucanto/interface"
 import Link from "next/link"
 
 export default function Space ({ params: { did: encodedDid } }: { params: { did: string } }) {
   const did = decodeURIComponent(encodedDid)
-  const { data: space, error } = useSpaceInfo(did as DIDKey)
+  const { data: space, error } = useConsumerGet(did as DIDKey)
   const blocked = space?.blocked
   const { setBlocked } = useSpaceActions(did as DIDKey)
   return (

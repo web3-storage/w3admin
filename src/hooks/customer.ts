@@ -2,27 +2,39 @@ import useSWR, { useSWRConfig } from 'swr'
 import { DID, Signer } from '@ucanto/interface'
 import { Customer } from '@/capabilities/customer'
 import { useClient } from './service'
-import { webDidFromMailtoDid } from '../util/did'
+import { domainFromMailtoDid } from '../util/did'
+import { RateLimit } from '@/capabilities/rate-limit'
 
 export function useCustomerActions (did: DID<'mailto'> | undefined) {
   const client = useClient()
   const { mutate } = useSWRConfig()
 
-  async function setBlocked (didToBlock: DID<'mailto' | 'web'>, blocked: boolean) {
+  async function setBlocked (subject: string, blocked: boolean) {
     if (did && client) {
-      const result = await Customer.block.invoke({
-        issuer: client.id as Signer,
-        audience: client.id,
-        with: client.id.did() as DID<'web'>,
-        nb: {
-          customer: didToBlock,
-          blocked
-        }
-      }).execute(client)
+      const result = blocked ? (
+        await RateLimit.add.invoke({
+          issuer: client.id as Signer,
+          audience: client.id,
+          with: client.id.did() as DID<'web'>,
+          nb: {
+            subject,
+            rate: 0
+          }
+        }).execute(client)
+      ) : (
+        await RateLimit.remove.invoke({
+          issuer: client.id as Signer,
+          audience: client.id,
+          with: client.id.did() as DID<'web'>,
+          nb: {
+            subject
+          }
+        }).execute(client)
+      )
       if (result.out.ok) {
         mutate(['customer/get', did])
       } else {
-        console.error('Customer.block failed:', result.out.error)
+        console.error('Block failed:', result.out.error)
       }
     }
   }
@@ -30,7 +42,7 @@ export function useCustomerActions (did: DID<'mailto'> | undefined) {
   const setEmailBlocked = (blocked: boolean) =>
     did && setBlocked(did, blocked)
   const setDomainBlocked = (blocked: boolean) =>
-    did && setBlocked(webDidFromMailtoDid(did), blocked)
+    did && setBlocked(domainFromMailtoDid(did), blocked)
 
   return { setEmailBlocked, setDomainBlocked }
 }

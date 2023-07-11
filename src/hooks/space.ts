@@ -1,8 +1,9 @@
 import useSWR, { useSWRConfig } from 'swr'
-import { Space } from '@/capabilities/space'
 import { DID, DIDKey, Signer } from '@ucanto/interface'
-import { spaceOne, spaceTwo, spacesByPublicKey } from '@/util/spaces'
+import { spacesByPublicKey } from '@/util/spaces'
 import { useClient } from './service'
+import { RateLimit } from '@/capabilities/rate-limit'
+import { Consumer } from '@/capabilities/consumer'
 
 export function useSpaceActions (did: DIDKey | undefined) {
   const client = useClient()
@@ -10,17 +11,28 @@ export function useSpaceActions (did: DIDKey | undefined) {
 
   async function setBlocked (blocked: boolean) {
     if (did && client) {
-      const result = await Space.block.invoke({
-        issuer: client.id as Signer,
-        audience: client.id,
-        with: client.id.did() as DID<'web'>,
-        nb: {
-          space: did,
-          blocked
-        }
-      }).execute(client)
+      const result = blocked ? (
+        await RateLimit.add.invoke({
+          issuer: client.id as Signer,
+          audience: client.id,
+          with: client.id.did() as DID<'web'>,
+          nb: {
+            subject: did,
+            rate: 0
+          }
+        }).execute(client)
+      ) : (
+        await RateLimit.remove.invoke({
+          issuer: client.id as Signer,
+          audience: client.id,
+          with: client.id.did() as DID<'web'>,
+          nb: {
+            subject: did
+          }
+        }).execute(client)
+      )
       if (result.out.ok) {
-        mutate(['space/info', did])
+        mutate(['consumer/get', did])
       } else {
         console.error('Space.block failed:', result.out.error)
         throw result.out.error
@@ -30,20 +42,23 @@ export function useSpaceActions (did: DIDKey | undefined) {
   return { setBlocked }
 }
 
-export function useSpaceInfo (did: DIDKey | undefined) {
+export function useConsumerGet (did: DIDKey | undefined) {
   const client = useClient()
-  return useSWR((did && client) ? ['space/info', did] : null,
+  return useSWR((did && client) ? ['consumer/get', did] : null,
     async ([, did]: [never, DID<'key'> | undefined]) => {
       if (did && client && spacesByPublicKey[did]) {
-        const result = await Space.info.invoke({
-          issuer: spacesByPublicKey[did],
+        const result = await Consumer.get.invoke({
+          issuer: client.id as Signer,
           audience: client.id,
-          with: did,
+          with: client.id.did() as DID<'web'>,
+          nb: {
+            consumer: did
+          }
         }).execute(client)
         if (result.out.ok) {
           return result.out.ok
         } else {
-          console.error('Space.info failed:', result.out.error)
+          console.error('Consumer.get failed:', result.out.error)
           throw result.out.error
         }
       } else {
