@@ -1,25 +1,22 @@
 import { capability, struct, ok, Schema } from '@ucanto/validator'
 import { Utils, Customer } from '@web3-storage/capabilities'
-import { SpaceDID } from '@web3-storage/capabilities/space'
-import { Space as UpstreamSpace } from '@web3-storage/capabilities'
 
 const { equal, equalWith, and } = Utils
 const { ProviderDID } = Customer
 
-export const block = capability({
-  can: 'space/block',
+export const get = capability({
+  can: 'consumer/get',
   with: ProviderDID,
   nb: struct({
-    space: SpaceDID,
-    blocked: Schema.boolean()
+    consumer: Schema.string()
   }),
   derives: (child, parent) => {
     return (
       and(equalWith(child, parent)) ||
-      and(equal(child.nb.space, parent.nb.space, 'space')) ||
+      and(equal(child.nb.consumer, parent.nb.consumer, 'consumer')) ||
       ok({})
     )
   },
 })
 
-export const Space = { ...UpstreamSpace, block } 
+export const Consumer = { get }

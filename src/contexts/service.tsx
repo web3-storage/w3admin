@@ -3,17 +3,17 @@
 import { useEffect, useState, useContext, createContext } from "react"
 import { ServiceMethod, DID, DIDKey, InferInvokedCapability } from '@ucanto/interface'
 import * as Server from '@ucanto/server'
-import * as Client from '@ucanto/client'
 import * as Signer from '@ucanto/principal/ed25519'
 import * as CAR from '@ucanto/transport/car'
 import * as Ucanto from '@ucanto/interface'
-import { Space } from '@/capabilities/space'
 import { Subscription } from '@/capabilities/subscription'
 import { Customer } from '@/capabilities/customer'
-import { webDidFromMailtoDid } from '@/util/did'
+import { domainFromMailtoDid } from '@/util/did'
 import { spaceOneDid, spaceTwoDid } from '@/util/spaces'
 import { createAgent } from "./agent"
 import { Agent } from "@web3-storage/access"
+import { RateLimit } from "@/capabilities/rate-limit"
+import { Consumer } from "@/capabilities/consumer"
 
 export type AccountDID = DID<'mailto'>
 
@@ -32,14 +32,17 @@ export interface CustomerGetOk {
   customer: null | Customer
 }
 
-export interface UnknownDidType extends Ucanto.Failure {}
+export interface RateLimitAddError extends Ucanto.Failure {}
 
-export type CustomerBlockError = UnknownDidType
-
-export interface CustomerBlockOk {
+export interface RateLimitAddOk {
 }
 
-export interface SpaceInfoRecord {
+export interface RateLimitRemoveError extends Ucanto.Failure {}
+
+export interface RateLimitRemoveOk {
+}
+
+export interface ConsumerGetRecord {
   did: Ucanto.DIDKey
   allocated: number
   total: number
@@ -47,13 +50,11 @@ export interface SpaceInfoRecord {
   blocked: boolean
 }
 
-export interface SpaceNotFound extends Ucanto.Failure {}
+export interface ConsumerNotFound extends Ucanto.Failure {}
 
-export type SpaceInfoOk = SpaceInfoRecord
-export type SpaceInfoError = SpaceNotFound
+export type ConsumerGetOk = ConsumerGetRecord
 
-export type SpaceBlockOk = {}
-export type SpaceBlockError = SpaceNotFound
+export type ConsumerGetError = ConsumerNotFound
 
 export interface SubscriptionNotFound extends Ucanto.Failure {}
 export interface SubscriptionGetOk {
@@ -64,28 +65,18 @@ export interface SubscriptionGetOk {
 export type SubscriptionGetError = SubscriptionNotFound
 
 export interface Service {
+  consumer: {
+    get: ServiceMethod<
+      InferInvokedCapability<typeof Consumer.get>,
+      ConsumerGetOk,
+      ConsumerGetError
+    >
+  },
   customer: {
     get: ServiceMethod<
       InferInvokedCapability<typeof Customer.get>,
       CustomerGetOk,
       CustomerGetError
-    >,
-    block: ServiceMethod<
-      InferInvokedCapability<typeof Customer.block>,
-      CustomerBlockOk,
-      CustomerBlockError
-    >
-  },
-  space: {
-    info: ServiceMethod<
-      InferInvokedCapability<typeof Space.info>,
-      SpaceInfoOk,
-      SpaceInfoError
-    >,
-    block: ServiceMethod<
-      InferInvokedCapability<typeof Space.block>,
-      SpaceBlockOk,
-      SpaceBlockError
     >
   },
   subscription: {
@@ -94,36 +85,38 @@ export interface Service {
       SubscriptionGetOk,
       SubscriptionGetError
     >
+  },
+  'rate-limit': {
+    add: ServiceMethod<
+      InferInvokedCapability<typeof RateLimit.add>,
+      RateLimitAddOk,
+      RateLimitAddError
+    >,
+    remove: ServiceMethod<
+    InferInvokedCapability<typeof RateLimit.remove>,
+    RateLimitRemoveOk,
+    RateLimitRemoveError
+  >
   }
 }
 
-type CustomerRow = Pick<Customer, 'did' | 'subscriptions' | 'blocked'>
+type CustomerRow = Pick<Customer, 'did' | 'subscriptions'>
 
 const customers: Record<string, CustomerRow> = {
   'did:mailto:example.com:travis': {
     did: 'did:mailto:example.com:travis',
     subscriptions: ['did:mailto:example.com:travis@test'],
-    blocked: false,
   },
   'did:mailto:dag.house:travis': {
     did: 'did:mailto:dag.house:travis',
     subscriptions: ['did:mailto:dag.house:travis@test'],
-    blocked: false,
   },
-}
-
-interface DomainRow {
-  blocked: boolean
-}
-
-const domains: Record<string, DomainRow> = {
 }
 
 interface SpaceRow {
   allocated: number
   total: number
   subscription: DID<'mailto'>
-  blocked: boolean
 }
 
 const spaces: Record<string, SpaceRow> = {
@@ -131,14 +124,12 @@ const spaces: Record<string, SpaceRow> = {
     allocated: 345093845,
     total: 1000000000,
     subscription: 'did:mailto:example.com:travis@test',
-    blocked: false
   },
 
   [spaceTwoDid]: {
     allocated: 9386794576,
     total: 1500000000,
     subscription: 'did:mailto:dag.house:travis@test',
-    blocked: false
   }
 }
 
@@ -158,6 +149,8 @@ const subscriptions: Record<string, SubscriptionRow> = {
   }
 }
 
+const limits: Record<string, number | undefined> = {}
+
 export async function createServer (id: Ucanto.Signer) {
   return Server.create<Service>({
     id,
@@ -165,11 +158,16 @@ export async function createServer (id: Ucanto.Signer) {
       customer: {
         get: Server.provide(Customer.get, async ({ capability }) => {
           const did = capability.nb.customer
-          const domainBlocked = domains[webDidFromMailtoDid(did)]?.blocked
+          const blocked = (limits[did] === 0)
+          const domainBlocked = (limits[domainFromMailtoDid(did)] === 0)
           if (customers[did]) {
             return {
               ok: {
-                customer: { ...customers[did], domainBlocked }
+                customer: {
+                  ...customers[did],
+                  blocked,
+                  domainBlocked
+                }
               }
             }
           } else {
@@ -180,49 +178,36 @@ export async function createServer (id: Ucanto.Signer) {
               }
             }
           }
-        }),
-        block: Server.provide(Customer.block, async ({ capability }) => {
-          const did = capability.nb.customer
-          if (did.startsWith('did:mailto')) {
-            customers[did].blocked = capability.nb.blocked
-            return { ok: {} }
-          } else if (did.startsWith('did:web')) {
-            domains[did] ||= { blocked: false }
-            domains[did].blocked = capability.nb.blocked
-            return { ok: {} }
-          } else {
-            return {
-              error: {
-                name: 'UnknownDidType',
-                message: `cannot block ${did}`
-              }
-            }
-          }
         })
       },
-      space: {
-        info: Server.provide(Space.info, async ({ capability }) => {
-          const space = spaces[capability.with]
+      'rate-limit': {
+        add: Server.provide(RateLimit.add, async ({ capability }) => {
+          limits[capability.nb.subject] = capability.nb.rate
+          return { ok: {} }
+        }),
+        remove: Server.provide(RateLimit.remove, async ({ capability }) => {
+          limits[capability.nb.subject] = undefined
+          return { ok: {} }
+        })
+      },
+      consumer: {
+        get: Server.provide(Consumer.get, async ({ capability }) => {
+          const consumerDid = capability.nb.consumer
+          const space = spaces[consumerDid]
+          const blocked = (limits[consumerDid] === 0)
           if (space) {
-            return { ok: { did: capability.with, ...spaces[capability.with] } }
-          } else {
             return {
-              error: {
-                name: 'SpaceNotFound',
-                message: `could not find space with did ${capability.with}`
+              ok: {
+                did: capability.nb.consumer as Ucanto.DIDKey,
+                blocked,
+                ...space
               }
             }
-          }
-        }),
-        block: Server.provide(Space.block, async ({ capability }) => {
-          if (spaces[capability.nb.space]) {
-            spaces[capability.nb.space].blocked = capability.nb.blocked
-            return { ok: {} }
           } else {
             return {
               error: {
-                name: 'SpaceNotFound',
-                message: `could not find space with did ${capability.with}`
+                name: 'ConsumerNotFound',
+                message: `could not find consumer with did ${capability.nb.consumer}`
               }
             }
           }
