@@ -1,21 +1,21 @@
 'use client'
 
-import { useSpaceActions, useSpaceInfo } from "@/hooks/space"
+import { useConsumer } from "@/hooks/consumer"
+import { useRateLimitActions, useRateLimits } from "@/hooks/rate-limit"
 import { DIDKey } from "@ucanto/interface"
 import Link from "next/link"
 
 export default function Space ({ params: { did: encodedDid } }: { params: { did: string } }) {
   const did = decodeURIComponent(encodedDid)
-  const { data: space, error } = useSpaceInfo(did as DIDKey)
-  const blocked = space?.blocked
-  const { setBlocked } = useSpaceActions(did as DIDKey)
+  const { data: space, error } = useConsumer(did as DIDKey)
+  const { addBlock, removeBlock, blocked } = useRateLimitActions(did)
   return (
     <div className='flex flex-col items-center'>
       <h2 className='text-2xl mb-4'>Space {did}</h2>
       {space && (
         <>
           <button className='rounded bg-gray-500 px-2 py-1 hover:bg-gray-600 active:bg-gray-400'
-            onClick={() => setBlocked(!blocked)}>
+            onClick={() => blocked ? removeBlock() : addBlock()}>
             {blocked ? 'Unblock space' : 'Block space'}
           </button>
           <table className='border-separate border-spacing-x-4'>

@@ -4,7 +4,8 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import * as DidMailto from '@web3-storage/did-mailto'
 
-import { useCustomerActions, useCustomer } from "@/hooks/customer"
+import { useCustomer } from "@/hooks/customer"
+import { useRateLimitActions } from "@/hooks/rate-limit"
 
 function domainFromEmail (email: string) {
   const ind = email.indexOf('@')
@@ -21,13 +22,14 @@ function mailtoDidFromUrlComponent (urlComponent: string) {
 
 export default function Customer ({ params: { did: encodedDid } }: { params: { did: string } }) {
   const did = mailtoDidFromUrlComponent(encodedDid)
+  const email = did && DidMailto.toEmail(did)
+  const domain = email && domainFromEmail(email)
+
   const { data: customer } = useCustomer(did)
-  const emailBlocked = customer?.blocked
-  const domainBlocked = customer?.domainBlocked
-  const { setEmailBlocked, setDomainBlocked } = useCustomerActions(did)
+  const { addBlock: addEmailBlock, removeBlock: removeEmailBlock, blocked: emailBlocked } = useRateLimitActions(email)
+  const { addBlock: addDomainBlock, removeBlock: removeDomainBlock, blocked: domainBlocked } = useRateLimitActions(domain)
+
   if (did) {
-    const email = DidMailto.toEmail(did)
-    const domain = domainFromEmail(email)
     return (
       <div className='flex flex-col items-center'>
         <h2 className='text-2xl mb-4'>Customer {did}</h2>
@@ -35,11 +37,11 @@ export default function Customer ({ params: { did: encodedDid } }: { params: { d
           <div className='flex flex-col items-center'>
             <div className='flex flex-row space-x-2 mt-4 mb-2'>
               <button className='rounded bg-gray-500 px-2 py-1 hover:bg-gray-600 active:bg-gray-400'
-                onClick={() => setEmailBlocked(!emailBlocked)}>
+                onClick={() => emailBlocked ? removeEmailBlock() : addEmailBlock()}>
                 {emailBlocked ? 'Unblock' : 'Block'} {email}
               </button>
               <button className='rounded bg-gray-500 px-2 py-1 hover:bg-gray-600 active:bg-gray-400'
-                onClick={() => setDomainBlocked(!domainBlocked)}>
+                onClick={() => domainBlocked ? removeDomainBlock() : addDomainBlock()}>
                 {domainBlocked ? 'Unblock' : 'Block'} {domain}
               </button>
             </div>
