@@ -3,6 +3,8 @@
 import { useSubscription } from "@/hooks/subscription"
 import Link from "next/link"
 
+export const runtime = 'edge'
+
 export default function Subscription ({ params: { id: encodedId } }: { params: { id: string } }) {
   const id = decodeURIComponent(encodedId)
   const { data: subscription } = useSubscription(id)

@@ -5,6 +5,8 @@ import { useRateLimitActions, useRateLimits } from "@/hooks/rate-limit"
 import { DIDKey } from "@ucanto/interface"
 import Link from "next/link"
 
+export const runtime = 'edge'
+
 export default function Space ({ params: { did: encodedDid } }: { params: { did: string } }) {
   const did = decodeURIComponent(encodedDid)
   const { data: space, error } = useConsumer(did as DIDKey)
