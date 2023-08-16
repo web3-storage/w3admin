@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "next lint"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.14",
@@ -28,7 +29,7 @@
     "bufferutil": "^4.0.7",
     "eslint": "8.41.0",
     "eslint-config-next": "13.4.4",
-    "next": "13.4.4",
+    "next": "13.4.16",
     "postcss": "8.4.23",
     "react": "18.2.0",
     "react-dom": "18.2.0",

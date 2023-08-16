@@ -23,7 +23,7 @@ export default function Root () {
   }, [router, customerEmail])
   return (
     <div className='flex flex-col items-center'>
-      <h1 className='text-xl mb-10'>Admin</h1>
+      <h1 className='text-xl mb-10'>w3admin</h1>
       <form onSubmit={goToSpace} className='flex flex-col space-y-2 mb-16'>
         <input className='text-black py-1 px-2 rounded' type='text' placeholder="Space DID" onChange={(e: ChangeEvent<HTMLInputElement>) => setSpaceDID(e.target.value)} />
         <input className='w3ui-button' type='submit' value='Go' />

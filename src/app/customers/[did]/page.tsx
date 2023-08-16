@@ -7,6 +7,8 @@ import * as DidMailto from '@web3-storage/did-mailto'
 import { useCustomer } from "@/hooks/customer"
 import { useRateLimitActions } from "@/hooks/rate-limit"
 
+export const runtime = 'edge'
+
 function domainFromEmail (email: string) {
   const ind = email.indexOf('@')
   return email.slice(ind + 1)
