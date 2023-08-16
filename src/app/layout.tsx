@@ -10,7 +10,7 @@ export default function RootLayout ({ children }: { children: React.ReactNode })
       <ServiceProvider>
         <html>
           <body>
-            <main className='grow bg-gray-dark text-white p-4'>
+            <main className='grow bg-gray-dark text-white p-4 min-h-screen bg-slate-800'>
               {children}
             </main>
           </body>
