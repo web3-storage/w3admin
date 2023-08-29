@@ -42,8 +42,8 @@ dependencies:
     specifier: ^8.0.0
     version: 8.0.0
   '@web3-storage/access':
-    specifier: ^14.0.0
-    version: 14.0.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+    specifier: ^15.2.0
+    version: 15.2.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
   '@web3-storage/capabilities':
     specifier: ^9.0.1
     version: 9.0.1
@@ -540,8 +540,8 @@ packages:
       multiformats: 11.0.2
     dev: false
 
-  /@web3-storage/access@14.0.0(bufferutil@4.0.7)(utf-8-validate@6.0.3):
-    resolution: {integrity: sha512-czxp62Rj2dH4y2kM7T5u8qGe2eZ3Y3vohzsN3eBPcvwCyEG2n7mMW890Eduy8XUzUEDx02szOSlRZXOykIO5Ug==}
+  /@web3-storage/access@15.2.0(bufferutil@4.0.7)(utf-8-validate@6.0.3):
+    resolution: {integrity: sha512-515WwZZLs2M0Dau3JGgroyK0a6fcuREcFv+i2EjUMLW8neYP7k8j++rpOjBSUNIIHkBbYtqx2aeX6fzmmEPriw==}
     hasBin: true
     dependencies:
       '@ipld/car': 5.1.1
@@ -552,7 +552,7 @@ packages:
       '@ucanto/principal': 8.0.0
       '@ucanto/transport': 8.0.0
       '@ucanto/validator': 8.0.0
-      '@web3-storage/capabilities': 6.0.0
+      '@web3-storage/capabilities': 9.2.0
       '@web3-storage/did-mailto': 2.0.0
       bigint-mod-arith: 3.2.1
       conf: 10.2.0
@@ -573,18 +573,19 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@web3-storage/capabilities@6.0.0:
-    resolution: {integrity: sha512-osEk6Rt5INGCGgefpY12glw9vdrINC/uRzysNRSez4oyNmGlJVqHSYCGD7mreXL7jOaY+m33AcpQtI9qySbjSg==}
+  /@web3-storage/capabilities@9.0.1:
+    resolution: {integrity: sha512-PgmlFejFZ8orW8yMQA6i2qm/cGXqUvP0DHHmlzJ7T1DYlvXfZ+WvUOwCEiJZCPoiijYbMauyoAhr/+Pw/IlxLA==}
     dependencies:
       '@ucanto/core': 8.0.0
       '@ucanto/interface': 8.0.0
       '@ucanto/principal': 8.0.0
       '@ucanto/transport': 8.0.0
       '@ucanto/validator': 8.0.0
+      '@web3-storage/data-segment': 3.0.1
     dev: false
 
-  /@web3-storage/capabilities@9.0.1:
-    resolution: {integrity: sha512-PgmlFejFZ8orW8yMQA6i2qm/cGXqUvP0DHHmlzJ7T1DYlvXfZ+WvUOwCEiJZCPoiijYbMauyoAhr/+Pw/IlxLA==}
+  /@web3-storage/capabilities@9.2.0:
+    resolution: {integrity: sha512-Qm2OpH/zIRECrlrsq8ZMh9W8qtZecn+CmB6fbkDYL9CEWdm28s+UC+Dxt9yIPUCZZMC+eTrxwS7jUwalB7T+VA==}
     dependencies:
       '@ucanto/core': 8.0.0
       '@ucanto/interface': 8.0.0

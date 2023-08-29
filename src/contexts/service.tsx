@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState, useContext, createContext } from "react"
+import { useEffect, useState, createContext } from "react"
 import { ServiceMethod, DID, DIDKey, InferInvokedCapability } from '@ucanto/interface'
 import * as Server from '@ucanto/server'
-import * as Signer from '@ucanto/principal/ed25519'
 import * as CAR from '@ucanto/transport/car'
 import * as Ucanto from '@ucanto/interface'
+import * as Signer from '@ucanto/principal/ed25519'
 import { Customer, Consumer, Subscription, RateLimit } from '@web3-storage/capabilities'
 import { webDidFromMailtoDid } from '@/util/did'
 import { spaceOneDid, spaceTwoDid } from '@/util/spaces'
@@ -142,7 +142,7 @@ interface RateLimitRow {
 
 const rateLimits: RateLimitRow[] = []
 
-export async function createServer (id: Ucanto.Signer) {
+export async function createLocalServer (id: Ucanto.Signer) {
   return Server.create<Service>({
     id,
     service: {
@@ -231,37 +231,36 @@ export async function createServer (id: Ucanto.Signer) {
   })
 }
 
+async function createLocalService () {
+  const signer = await Signer.generate()
+  const servicePrincipal = signer.withDID('did:web:test.web3.storage')
+  return {
+    server: await createLocalServer(servicePrincipal),
+    servicePrincipal
+  }
+}
+
 interface ServiceContextValue {
-  agent?: Agent
-  serverPrincipal?: Ucanto.Signer
+  servicePrincipal?: Ucanto.Signer
   server?: Ucanto.ServerView<Service>
 }
 
 export const ServiceContext = createContext<ServiceContextValue>({})
 
 export function ServiceProvider ({ children }: { children: JSX.Element | JSX.Element[] }) {
-  const [serverPrincipal, setServerPrincipal] = useState<Ucanto.Signer>()
+  const [servicePrincipal, setServicePrincipal] = useState<Ucanto.Signer>()
   const [server, setServer] = useState<Ucanto.ServerView<Service>>()
-  const [agent, setAgent] = useState<Agent>()
   useEffect(function () {
     async function load () {
-      const signer = await Signer.generate()
-      setAgent(await createAgent({ principal: signer, name: 'did:web:test.web3.storage' }))
-      const id = signer.withDID('did:web:test.web3.storage')
-      setServerPrincipal(id)
-      setServer(await createServer(id))
+      const { server, servicePrincipal } = await createLocalService()
+      setServicePrincipal(servicePrincipal)
+      setServer(server)
     }
     load()
   }, [])
   return (
-    <ServiceContext.Provider value={{ agent, serverPrincipal, server }}>
+    <ServiceContext.Provider value={{ servicePrincipal, server }}>
       {children}
     </ServiceContext.Provider>
   )
 }
-
-export function useServer () {
-  const { server } = useContext(ServiceContext)
-  return server
-}
-

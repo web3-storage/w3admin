@@ -1,21 +1,22 @@
 import useSWR from 'swr'
-import { useClient } from './service'
+import { useServicePrincipal } from './service'
+import { useAgent } from './agent'
 import { Subscription } from '@/capabilities/subscription'
-import { Signer, DID } from '@ucanto/interface'
+import { DID } from '@ucanto/interface'
 
 export function useSubscription (id: string | undefined) {
-  const client = useClient()
-  return useSWR((id && client) ? ['subscription/get', id] : null,
+  const agent = useAgent()
+  const servicePrincipal = useServicePrincipal()
+  return useSWR((id && agent && servicePrincipal) ? ['subscription/get', id] : null,
     async ([, id]: [never, string | undefined]) => {
-      if (id && client) {
-        const result = await Subscription.get.invoke({
-          issuer: client.id as Signer,
-          audience: client.id,
-          with: client.id.did() as DID<'web'>,
+      if (id && agent && servicePrincipal) {
+        const result = await agent.invokeAndExecute(Subscription.get, {
+          audience: servicePrincipal,
+          with: servicePrincipal.did() as DID<'web'>,
           nb: {
             subscription: id
           }
-        }).execute(client)
+        })
         if (result.out.ok) {
           return result.out.ok
         } else {

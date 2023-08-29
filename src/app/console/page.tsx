@@ -2,7 +2,7 @@
 
 import { useContext, useState, useEffect } from 'react'
 import { delegate } from '@ucanto/core'
-import { useAgent } from "@/contexts/agent"
+import { useAgent } from "@/hooks/agent"
 import { ServiceContext, } from "@/contexts/service"
 import { Delegation, Capabilities } from '@ucanto/interface'
 
@@ -16,15 +16,14 @@ export default function Console () {
       setDelegations(agent.proofs())
     }
   }, [agent])
-  const { serverPrincipal } = useContext(ServiceContext)
-  console.log("server principal", serverPrincipal)
-  console.log("delegations", delegations)
+  const { servicePrincipal: servicePrincipal } = useContext(ServiceContext)
+
   async function authorize () {
-    if (agent && serverPrincipal) {
+    if (agent && servicePrincipal) {
       const delegation = await delegate({
-        issuer: serverPrincipal,
+        issuer: servicePrincipal,
         audience: agent.issuer,
-        capabilities: [{ with: serverPrincipal.did(), can: 'customer/get' }],
+        capabilities: [{ with: servicePrincipal.did(), can: 'customer/get' }],
         expiration: Math.floor(Date.now() / 1000) + (60 * 30)
       })
       await agent.addProof(delegation)

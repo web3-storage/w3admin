@@ -4,8 +4,17 @@ import * as Client from '@ucanto/client'
 import * as Signer from '@ucanto/principal/ed25519'
 import * as CAR from '@ucanto/transport/car'
 import * as Ucanto from '@ucanto/interface'
-import { Service, ServiceContext, useServer } from '@/contexts/service'
+import { Service, ServiceContext } from '@/contexts/service'
 
+export function useServer () {
+  const { server } = useContext(ServiceContext)
+  return server
+}
+
+export function useServicePrincipal () {
+  const { servicePrincipal } = useContext(ServiceContext)
+  return servicePrincipal
+}
 
 export async function createClient (id: Ucanto.Signer, server: Server.ServerView<Service>) {
   return Client.connect({
@@ -16,26 +25,15 @@ export async function createClient (id: Ucanto.Signer, server: Server.ServerView
 }
 
 export function useClient () {
-  const { server, serverPrincipal } = useContext(ServiceContext)
+  const { server, servicePrincipal } = useContext(ServiceContext)
   const [client, setClient] = useState<Server.ConnectionView<Service>>()
   useEffect(() => {
     async function load () {
-      if (server && serverPrincipal) {
-        setClient(await createClient(serverPrincipal, server))
+      if (server && servicePrincipal) {
+        setClient(await createClient(servicePrincipal, server))
       }
     }
     load()
-  }, [server, serverPrincipal])
+  }, [server, servicePrincipal])
   return client
-}
-
-export function useAgent () {
-  const [agent, setAgent] = useState<Ucanto.Signer>()
-  useEffect(() => {
-    async function load () {
-      setAgent(await Signer.generate())
-    }
-    load()
-  }, [])
-  return agent
 }

@@ -6,7 +6,7 @@ import type {
   ConnectionView,
   Principal,
 } from '@ucanto/interface'
-import type { Service } from '@web3-storage/access/types'
+import { Service } from './service'
 import { Agent } from '@web3-storage/access/agent'
 import { StoreIndexedDB } from '@web3-storage/access/stores/store-indexeddb'
 import * as RSASigner from '@ucanto/principal/rsa'
@@ -30,7 +30,7 @@ interface CreateAgentOptions extends ServiceConfig {
  */
 export async function createAgent (
   options: CreateAgentOptions = { name: 'w3admin' }
-): Promise<Agent> {
+): Promise<Agent<Service>> {
   const dbName = `${options.name}${options.servicePrincipal != null ? '@' + options.servicePrincipal.did() : ''
     }`
   const store = new StoreIndexedDB(dbName, {
@@ -39,23 +39,23 @@ export async function createAgent (
   })
   const raw = await store.load()
   if (raw != null) {
-    return Object.assign(Agent.from(raw, { ...options, store }), { store })
+    return Object.assign(Agent.from<Service>(raw, { ...options, store }), { store })
   }
   const principal = options.principal ?? await RSASigner.generate()
   return Object.assign(
-    await Agent.create({ principal }, { ...options, store }),
+    await Agent.create<Service>({ principal }, { ...options, store }),
     { store }
   )
 }
 
 interface AgentContextValue {
-  agent?: Agent
+  agent?: Agent<Service>
 }
 
 export const AgentContext = createContext<AgentContextValue>({})
 
 export function AgentProvider ({ children }: { children: JSX.Element | JSX.Element[] }) {
-  const [agent, setAgent] = useState<Agent>()
+  const [agent, setAgent] = useState<Agent<Service>>()
   useEffect(function () {
     async function load () {
       setAgent(await createAgent())
@@ -67,9 +67,4 @@ export function AgentProvider ({ children }: { children: JSX.Element | JSX.Eleme
       {children}
     </AgentContext.Provider>
   )
-}
-
-export function useAgent () {
-  const { agent } = useContext(AgentContext)
-  return agent
 }

@@ -1,23 +1,23 @@
 import useSWR, { useSWRConfig } from 'swr'
 import { RateLimit } from '@web3-storage/capabilities'
 import { DID, Signer } from '@ucanto/interface'
-import { useClient } from './service'
+import { useClient, useServicePrincipal } from './service'
+import { useAgent } from './agent'
 
 export function useRateLimitActions (subject: string | undefined) {
-  const client = useClient()
+  const agent = useAgent()
+  const servicePrincipal = useServicePrincipal()
   const { mutate } = useSWRConfig()
 
   async function addBlock () {
-    if (subject && client) {
-      const result = await RateLimit.add.invoke({
-        issuer: client.id as Signer,
-        audience: client.id,
-        with: client.id.did() as DID<'web'>,
+    if (subject && agent && servicePrincipal) {
+      const result = await agent.invokeAndExecute(RateLimit.add, {
+        with: servicePrincipal.did() as DID<'web'>,
         nb: {
           subject,
           rate: 0
         }
-      }).execute(client)
+      })
       if (result.out.ok) {
         mutate(['rate-limit/list', subject])
       } else {
@@ -28,15 +28,13 @@ export function useRateLimitActions (subject: string | undefined) {
   }
 
   async function removeRateLimit (id: string) {
-    if (subject && client) {
-      const result = await RateLimit.remove.invoke({
-        issuer: client.id as Signer,
-        audience: client.id,
-        with: client.id.did() as DID<'web'>,
+    if (subject && agent && servicePrincipal) {
+      const result = await agent.invokeAndExecute(RateLimit.remove, {
+        with: servicePrincipal.did() as DID<'web'>,
         nb: {
           id
         }
-      }).execute(client)
+      })
       if (result.out.ok) {
         mutate(['rate-limit/list', subject])
       } else {
