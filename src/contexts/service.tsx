@@ -1,16 +1,16 @@
 'use client'
 
 import { useEffect, useState, createContext } from "react"
-import { ServiceMethod, DID, DIDKey, InferInvokedCapability } from '@ucanto/interface'
+import * as DID from '@ipld/dag-ucan/did'
+import { ServiceMethod, DIDKey, InferInvokedCapability } from '@ucanto/interface'
 import * as Server from '@ucanto/server'
-import * as CAR from '@ucanto/transport/car'
+import { CAR, HTTP } from '@ucanto/transport'
 import * as Ucanto from '@ucanto/interface'
 import * as Signer from '@ucanto/principal/ed25519'
+import * as Client from '@ucanto/client'
 import { Customer, Consumer, Subscription, RateLimit } from '@web3-storage/capabilities'
 import { webDidFromMailtoDid } from '@/util/did'
 import { spaceOneDid, spaceTwoDid } from '@/util/spaces'
-import { createAgent } from "./agent"
-import { Agent } from "@web3-storage/access"
 import {
   CustomerGetSuccess,
   CustomerGetFailure,
@@ -26,8 +26,9 @@ import {
   RateLimitListFailure,
   RateLimitSubject
 } from "@web3-storage/capabilities/types"
+import { Absentee } from "@ucanto/principal"
 
-export type AccountDID = DID<'mailto'>
+export type AccountDID = Ucanto.DID<'mailto'>
 
 export type Customer = {
   did: AccountDID
@@ -102,7 +103,7 @@ const domains: Record<string, DomainRow> = {
 interface SpaceRow {
   allocated: number
   total: number
-  subscription: DID<'mailto'>
+  subscription: Ucanto.DID<'mailto'>
 }
 
 const spaces: Record<string, SpaceRow> = {
@@ -120,7 +121,7 @@ const spaces: Record<string, SpaceRow> = {
 }
 
 interface SubscriptionRow {
-  customer: DID<'mailto'>
+  customer: Ucanto.DID<'mailto'>
   consumer: DIDKey
 }
 
@@ -241,20 +242,36 @@ async function createLocalService () {
 }
 
 interface ServiceContextValue {
-  servicePrincipal?: Ucanto.Signer
-  server?: Ucanto.ServerView<Service>
+  servicePrincipal?: Ucanto.Principal
+  server?: Server.Channel<Service>
 }
 
 export const ServiceContext = createContext<ServiceContextValue>({})
 
 export function ServiceProvider ({ children }: { children: JSX.Element | JSX.Element[] }) {
-  const [servicePrincipal, setServicePrincipal] = useState<Ucanto.Signer>()
+  const [remoteServiceConfigs, setRemoteServiceConfigs] = useState<[Ucanto.URI, Ucanto.DID][]>([
+    ['https://9bovsbxdii.execute-api.us-west-2.amazonaws.com', 'did:web:travis.web3.storage']
+  ])
+  const [services, setServices] = useState<[Ucanto.Principal, Server.Channel<Service>][]>(
+    remoteServiceConfigs.map(([url, did]) => (
+      [
+        Absentee.from({ id: did }),
+        HTTP.open({
+          url: new URL(url),
+          method: 'POST',
+        })
+      ]
+    ))
+  )
+  const [servicePrincipal, setServicePrincipal] = useState<Ucanto.Principal>()
   const [server, setServer] = useState<Ucanto.ServerView<Service>>()
   useEffect(function () {
     async function load () {
       const { server, servicePrincipal } = await createLocalService()
-      setServicePrincipal(servicePrincipal)
-      setServer(server)
+      if ((!servicePrincipal || !server) && (services.length > 0)) {
+        setServicePrincipal(servicePrincipal)
+        setServer(server)
+      }
     }
     load()
   }, [])

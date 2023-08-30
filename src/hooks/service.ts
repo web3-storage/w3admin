@@ -16,7 +16,7 @@ export function useServicePrincipal () {
   return servicePrincipal
 }
 
-export async function createClient (id: Ucanto.Signer, server: Server.ServerView<Service>) {
+export async function createClient (id: Ucanto.Principal, server: Server.Channel<Service>) {
   return Client.connect({
     id,
     codec: CAR.outbound,

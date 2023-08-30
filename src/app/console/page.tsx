@@ -5,6 +5,7 @@ import { delegate } from '@ucanto/core'
 import { useAgent } from "@/hooks/agent"
 import { ServiceContext, } from "@/contexts/service"
 import { Delegation, Capabilities } from '@ucanto/interface'
+import * as Ucanto from '@ucanto/interface'
 
 export default function Console () {
   const agent = useAgent()
@@ -21,7 +22,7 @@ export default function Console () {
   async function authorize () {
     if (agent && servicePrincipal) {
       const delegation = await delegate({
-        issuer: servicePrincipal,
+        issuer: servicePrincipal as Ucanto.Signer,
         audience: agent.issuer,
         capabilities: [{ with: servicePrincipal.did(), can: 'customer/get' }],
         expiration: Math.floor(Date.now() / 1000) + (60 * 30)
