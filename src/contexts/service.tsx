@@ -266,23 +266,24 @@ interface ServiceContextValue {
   servicePrincipal?: Ucanto.Principal
   server?: Server.Channel<Service>
   serviceConfigs: ServiceConfigs
-  selectedService?: string
-  setSelectedService: (key: string) => void
+  selectedService?: ServiceConfig
+  selectedServiceKey?: string
+  setSelectedServiceKey: (key: string) => void
 }
 
 export const ServiceContext = createContext<ServiceContextValue>({
   serviceConfigs: staticServiceConfigs,
-  setSelectedService: () => { console.error('setSelectedService is not implemented') }
+  setSelectedServiceKey: () => { console.error('setSelectedService is not implemented') }
 })
 
 export function ServiceProvider ({ children }: { children: JSX.Element | JSX.Element[] }) {
   const [serviceConfigs, setServiceConfigs] = useState<ServiceConfigs>(staticServiceConfigs)
-  const [selectedService, setSelectedService] = useState<string>('local')
+  const [selectedServiceKey, setSelectedServiceKey] = useState<string>('local')
   const [servicePrincipal, setServicePrincipal] = useState<Ucanto.Principal>()
   const [server, setServer] = useState<Server.Channel<Service>>()
   useEffect(function () {
     async function load () {
-      const selectedServiceConfig = serviceConfigs[selectedService]
+      const selectedServiceConfig = serviceConfigs[selectedServiceKey]
       if (selectedServiceConfig.local) {
         const { server, servicePrincipal } = await createLocalService()
         setServicePrincipal(servicePrincipal)
@@ -298,7 +299,14 @@ export function ServiceProvider ({ children }: { children: JSX.Element | JSX.Ele
     load()
   }, [])
   return (
-    <ServiceContext.Provider value={{ servicePrincipal, server, serviceConfigs, selectedService, setSelectedService }}>
+    <ServiceContext.Provider value={{
+      servicePrincipal,
+      server,
+      serviceConfigs,
+      selectedServiceKey,
+      selectedService: serviceConfigs[selectedServiceKey],
+      setSelectedServiceKey
+    }}>
       {children}
     </ServiceContext.Provider>
   )

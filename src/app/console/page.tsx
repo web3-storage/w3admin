@@ -24,7 +24,9 @@ export default function Console () {
       const delegation = await delegate({
         issuer: servicePrincipal as Ucanto.Signer,
         audience: agent.issuer,
-        capabilities: [{ with: servicePrincipal.did(), can: 'customer/get' }],
+        capabilities: [
+          { with: servicePrincipal.did(), can: 'customer/get' }
+        ],
         expiration: Math.floor(Date.now() / 1000) + (60 * 30)
       })
       await agent.addProof(delegation)
