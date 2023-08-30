@@ -241,42 +241,64 @@ async function createLocalService () {
   }
 }
 
+interface RemoteServiceConfig {
+  name: string
+  local?: false
+  url: Ucanto.URI
+  did: Ucanto.DID
+}
+
+interface LocalServiceConfig {
+  name: string
+  local: true
+}
+
+type ServiceConfig = RemoteServiceConfig | LocalServiceConfig
+
+type ServiceConfigs = Record<string, ServiceConfig>
+
+const staticServiceConfigs: ServiceConfigs = {
+  local: { name: "Local", local: true },
+  travis: { name: "Travis", url: 'https://9bovsbxdii.execute-api.us-west-2.amazonaws.com', did: 'did:web:travis.web3.storage' }
+}
+
 interface ServiceContextValue {
   servicePrincipal?: Ucanto.Principal
   server?: Server.Channel<Service>
+  serviceConfigs: ServiceConfigs
+  selectedService?: string
+  setSelectedService: (key: string) => void
 }
 
-export const ServiceContext = createContext<ServiceContextValue>({})
+export const ServiceContext = createContext<ServiceContextValue>({
+  serviceConfigs: staticServiceConfigs,
+  setSelectedService: () => { console.error('setSelectedService is not implemented') }
+})
 
 export function ServiceProvider ({ children }: { children: JSX.Element | JSX.Element[] }) {
-  const [remoteServiceConfigs, setRemoteServiceConfigs] = useState<[Ucanto.URI, Ucanto.DID][]>([
-    ['https://9bovsbxdii.execute-api.us-west-2.amazonaws.com', 'did:web:travis.web3.storage']
-  ])
-  const [services, setServices] = useState<[Ucanto.Principal, Server.Channel<Service>][]>(
-    remoteServiceConfigs.map(([url, did]) => (
-      [
-        Absentee.from({ id: did }),
-        HTTP.open({
-          url: new URL(url),
-          method: 'POST',
-        })
-      ]
-    ))
-  )
+  const [serviceConfigs, setServiceConfigs] = useState<ServiceConfigs>(staticServiceConfigs)
+  const [selectedService, setSelectedService] = useState<string>('local')
   const [servicePrincipal, setServicePrincipal] = useState<Ucanto.Principal>()
-  const [server, setServer] = useState<Ucanto.ServerView<Service>>()
+  const [server, setServer] = useState<Server.Channel<Service>>()
   useEffect(function () {
     async function load () {
-      const { server, servicePrincipal } = await createLocalService()
-      if ((!servicePrincipal || !server) && (services.length > 0)) {
+      const selectedServiceConfig = serviceConfigs[selectedService]
+      if (selectedServiceConfig.local) {
+        const { server, servicePrincipal } = await createLocalService()
         setServicePrincipal(servicePrincipal)
         setServer(server)
+      } else {
+        setServicePrincipal(Absentee.from({ id: selectedServiceConfig.did }))
+        setServer(HTTP.open({
+          url: new URL(selectedServiceConfig.url),
+          method: 'POST',
+        }))
       }
     }
     load()
   }, [])
   return (
-    <ServiceContext.Provider value={{ servicePrincipal, server }}>
+    <ServiceContext.Provider value={{ servicePrincipal, server, serviceConfigs, selectedService, setSelectedService }}>
       {children}
     </ServiceContext.Provider>
   )
