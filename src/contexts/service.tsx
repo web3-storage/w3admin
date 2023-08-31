@@ -1,13 +1,11 @@
 'use client'
 
 import { useEffect, useState, createContext } from "react"
-import * as DID from '@ipld/dag-ucan/did'
 import { ServiceMethod, DIDKey, InferInvokedCapability } from '@ucanto/interface'
 import * as Server from '@ucanto/server'
 import { CAR, HTTP } from '@ucanto/transport'
 import * as Ucanto from '@ucanto/interface'
 import * as Signer from '@ucanto/principal/ed25519'
-import * as Client from '@ucanto/client'
 import { Customer, Consumer, Subscription, RateLimit } from '@web3-storage/capabilities'
 import { webDidFromMailtoDid } from '@/util/did'
 import { spaceOneDid, spaceTwoDid } from '@/util/spaces'
@@ -232,9 +230,12 @@ export async function createLocalServer (id: Ucanto.Signer) {
   })
 }
 
+const localServicePrincipalPrivateKey = process.env.NEXT_PUBLIC_SERVICE_PRIVATE_KEY
+const localServicePrincipalDid = process.env.NEXT_PUBLIC_SERVICE_DID
+
 async function createLocalService () {
-  const signer = await Signer.generate()
-  const servicePrincipal = signer.withDID('did:web:test.web3.storage')
+  const signer = localServicePrincipalPrivateKey ? Signer.parse(localServicePrincipalPrivateKey) : await Signer.generate()
+  const servicePrincipal = signer.withDID(localServicePrincipalDid ? localServicePrincipalDid as Ucanto.DID : 'did:web:dev.web3.storage')
   return {
     server: await createLocalServer(servicePrincipal),
     servicePrincipal
@@ -261,7 +262,6 @@ const staticServiceConfigs: ServiceConfigs = {
   local: { name: "Local", local: true },
   travis: { name: "Travis", url: 'https://9bovsbxdii.execute-api.us-west-2.amazonaws.com', did: 'did:web:travis.web3.storage' }
 }
-
 interface ServiceContextValue {
   servicePrincipal?: Ucanto.Principal
   server?: Server.Channel<Service>

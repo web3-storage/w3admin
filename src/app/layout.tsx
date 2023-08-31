@@ -7,8 +7,8 @@ import Nav from '@/components/nav'
 
 export default function RootLayout ({ children }: { children: React.ReactNode }): JSX.Element {
   return (
-    <AgentProvider>
-      <ServiceProvider>
+    <ServiceProvider>
+      <AgentProvider>
         <html>
           <body className='min-h-screen bg-slate-800 text-white'>
             <Nav />
@@ -17,7 +17,7 @@ export default function RootLayout ({ children }: { children: React.ReactNode })
             </main>
           </body>
         </html>
-      </ServiceProvider>
-    </AgentProvider>
+      </AgentProvider>
+    </ServiceProvider>
   )
 }

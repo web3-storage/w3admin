@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useContext, createContext } from "react"
+import { useEffect, useState, createContext } from "react"
 
 import type {
   ConnectionView,
@@ -11,6 +11,7 @@ import { Agent } from '@web3-storage/access/agent'
 import { StoreIndexedDB } from '@web3-storage/access/stores/store-indexeddb'
 import * as RSASigner from '@ucanto/principal/rsa'
 import * as Ucanto from '@ucanto/interface'
+import { useClient } from "@/hooks/service"
 
 const DB_STORE_NAME = 'keyring'
 
@@ -22,6 +23,7 @@ interface ServiceConfig {
 interface CreateAgentOptions extends ServiceConfig {
   principal?: Ucanto.Signer<Ucanto.DIDKey>
   name?: string
+  connection?: ConnectionView<Service>
 }
 
 /**
@@ -56,12 +58,15 @@ export const AgentContext = createContext<AgentContextValue>({})
 
 export function AgentProvider ({ children }: { children: JSX.Element | JSX.Element[] }) {
   const [agent, setAgent] = useState<Agent<Service>>()
+  const client = useClient()
   useEffect(function () {
     async function load () {
-      setAgent(await createAgent())
+      if (client) {
+        setAgent(await createAgent({ connection: client }))
+      }
     }
     load()
-  }, [])
+  }, [client])
   return (
     <AgentContext.Provider value={{ agent }}>
       {children}
