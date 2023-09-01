@@ -202,9 +202,7 @@ export async function createLocalServer (id: Ucanto.Signer) {
       },
       'rate-limit': {
         add: Server.provide(RateLimit.add, async ({ capability }) => {
-          console.log(rateLimits)
           rateLimits.push(capability.nb)
-          console.log(rateLimits)
           return { ok: { id: (rateLimits.length - 1).toString() } }
         }),
         remove: Server.provide(RateLimit.remove, async ({ capability }) => {
@@ -260,52 +258,41 @@ type ServiceConfigs = Record<string, ServiceConfig>
 
 const staticServiceConfigs: ServiceConfigs = {
   local: { name: "Local", local: true },
-  travis: { name: "Travis", url: 'https://9bovsbxdii.execute-api.us-west-2.amazonaws.com', did: 'did:web:travis.web3.storage' }
+  travis: { name: "Travis", url: 'https://9bovsbxdii.execute-api.us-west-2.amazonaws.com', did: 'did:web:staging.web3.storage' }
 }
 interface ServiceContextValue {
   servicePrincipal?: Ucanto.Principal
   server?: Server.Channel<Service>
-  serviceConfigs: ServiceConfigs
-  selectedService?: ServiceConfig
-  selectedServiceKey?: string
-  setSelectedServiceKey: (key: string) => void
 }
 
-export const ServiceContext = createContext<ServiceContextValue>({
-  serviceConfigs: staticServiceConfigs,
-  setSelectedServiceKey: () => { console.error('setSelectedService is not implemented') }
-})
+export const ServiceContext = createContext<ServiceContextValue>({})
 
 export function ServiceProvider ({ children }: { children: JSX.Element | JSX.Element[] }) {
-  const [serviceConfigs, setServiceConfigs] = useState<ServiceConfigs>(staticServiceConfigs)
-  const [selectedServiceKey, setSelectedServiceKey] = useState<string>('local')
   const [servicePrincipal, setServicePrincipal] = useState<Ucanto.Principal>()
   const [server, setServer] = useState<Server.Channel<Service>>()
   useEffect(function () {
     async function load () {
-      const selectedServiceConfig = serviceConfigs[selectedServiceKey]
-      if (selectedServiceConfig.local) {
+      if (process.env.NEXT_PUBLIC_USE_LOCAL_SERVICE === 'true') {
         const { server, servicePrincipal } = await createLocalService()
         setServicePrincipal(servicePrincipal)
         setServer(server)
-      } else {
-        setServicePrincipal(Absentee.from({ id: selectedServiceConfig.did }))
+      } else if (process.env.NEXT_PUBLIC_SERVICE_URL && process.env.NEXT_PUBLIC_SERVICE_DID) {
+        setServicePrincipal(Absentee.from({ id: process.env.NEXT_PUBLIC_SERVICE_DID as Ucanto.DID }))
         setServer(HTTP.open({
-          url: new URL(selectedServiceConfig.url),
+          url: new URL(process.env.NEXT_PUBLIC_SERVICE_URL),
           method: 'POST',
         }))
+      } else {
+        console.error("Service is not configured - please set NEXT_PUBLIC_SERVICE_URL and NEXT_PUBLIC_SERVICE_DID or set NEXT_PUBLIC_USE_LOCAL_SERVICE to 'true'")
       }
     }
     load()
   }, [])
+  
   return (
     <ServiceContext.Provider value={{
       servicePrincipal,
       server,
-      serviceConfigs,
-      selectedServiceKey,
-      selectedService: serviceConfigs[selectedServiceKey],
-      setSelectedServiceKey
     }}>
       {children}
     </ServiceContext.Provider>

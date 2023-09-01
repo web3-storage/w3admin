@@ -60,17 +60,17 @@ export function useRateLimitActions (subject: string | undefined) {
 
 export function useRateLimits (subject: string | undefined) {
   const client = useClient()
+  const agent = useAgent()
+  const servicePrincipal = useServicePrincipal()
   return useSWR((subject && client) ? ['rate-limit/list', subject] : null,
     async ([, subject]: [never, DID<'web'> | undefined]) => {
-      if (subject && client) {
-        const result = await RateLimit.list.invoke({
-          issuer: client.id as Signer,
-          audience: client.id,
-          with: client.id.did() as DID<'web'>,
+      if (subject && agent && servicePrincipal) {
+        const result = await agent.invokeAndExecute(RateLimit.list, {
+          with: servicePrincipal.did() as DID<'web'>,
           nb: {
             subject
           }
-        }).execute(client)
+        })
         if (result.out.ok) {
           return result.out.ok
         } else {
