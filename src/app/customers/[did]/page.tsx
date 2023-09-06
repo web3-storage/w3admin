@@ -6,6 +6,8 @@ import * as DidMailto from '@web3-storage/did-mailto'
 
 import { useCustomer } from "@/hooks/customer"
 import { useRateLimitActions } from "@/hooks/rate-limit"
+import { SimpleError } from "@/components/error"
+import { Loader } from "@/components/brand"
 
 export const runtime = 'edge'
 
@@ -27,7 +29,7 @@ export default function Customer ({ params: { did: encodedDid } }: { params: { d
   const email = did && DidMailto.toEmail(did)
   const domain = email && domainFromEmail(email)
 
-  const { data: customer } = useCustomer(did)
+  const { data: customer, error, isLoading } = useCustomer(did)
   const { addBlock: addEmailBlock, removeBlock: removeEmailBlock, blocked: emailBlocked } = useRateLimitActions(email)
   const { addBlock: addDomainBlock, removeBlock: removeDomainBlock, blocked: domainBlocked } = useRateLimitActions(domain)
 
@@ -35,6 +37,8 @@ export default function Customer ({ params: { did: encodedDid } }: { params: { d
     return (
       <div className='flex flex-col items-center'>
         <h2 className='text-2xl mb-4'>Customer {did}</h2>
+        {isLoading && <Loader />}
+        {error && <SimpleError>{error.toString()}</SimpleError>}
         {customer && (
           <div className='flex flex-col items-center'>
             <div className='flex flex-row space-x-2 mt-4 mb-2'>

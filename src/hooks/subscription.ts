@@ -21,7 +21,7 @@ export function useSubscription (id: string | undefined) {
           return result.out.ok
         } else {
           console.error('Subscription.get failed:', result.out.error)
-          return null
+          throw result.out.error
         }
       } else {
         return null

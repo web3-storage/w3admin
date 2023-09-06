@@ -21,7 +21,7 @@ export function useConsumer (did: string | undefined) {
           return result.out.ok
         } else {
           console.error('Consumer.get failed:', result.out.error)
-          return null
+          throw result.out.error
         }
       } else {
         return null

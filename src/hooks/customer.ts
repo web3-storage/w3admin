@@ -21,7 +21,7 @@ export function useCustomer (did: string | undefined) {
           return result.out.ok
         } else {
           console.error('Customer.get failed:', result.out.error)
-          return null
+          throw result.out.error
         }
       } else {
         return null

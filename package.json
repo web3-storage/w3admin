@@ -13,6 +13,7 @@
     "@headlessui/react": "^1.7.14",
     "@headlessui/tailwindcss": "^0.2.0",
     "@heroicons/react": "^2.0.18",
+    "@ipld/car": "^5.2.2",
     "@ipld/dag-ucan": "^3.3.2",
     "@types/node": "20.2.4",
     "@types/react": "18.2.7",
@@ -34,10 +35,14 @@
     "next": "13.4.19",
     "postcss": "8.4.23",
     "react": "18.2.0",
+    "react-copy-to-clipboard": "^5.1.0",
     "react-dom": "18.2.0",
     "swr": "^2.1.5",
     "tailwindcss": "3.3.2",
     "typescript": "5.0.4",
     "utf-8-validate": "^6.0.3"
+  },
+  "devDependencies": {
+    "@types/react-copy-to-clipboard": "^5.0.4"
   }
 }

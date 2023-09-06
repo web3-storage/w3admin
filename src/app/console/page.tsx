@@ -7,10 +7,24 @@ import { ServiceContext, } from "@/contexts/service"
 import { Delegation, Capabilities } from '@ucanto/interface'
 import * as Ucanto from '@ucanto/interface'
 import * as Signer from '@ucanto/principal/ed25519'
+import { CarReader } from '@ipld/car/reader'
+import { importDAG } from '@ucanto/core/delegation'
+import { CopyToClipboardButton } from '@/components/copy'
+import { SimpleError } from '@/components/error'
+
+export async function toDelegation (car: Blob): Promise<Delegation> {
+  const blocks = []
+  const bytes = new Uint8Array(await car.arrayBuffer())
+  const reader = await CarReader.fromBytes(bytes)
+  for await (const block of reader.blocks()) {
+    blocks.push(block as Ucanto.Block)
+  }
+  return importDAG(blocks)
+}
 
 export default function Console () {
   const agent = useAgent()
-  const name = agent?.did()
+  const agentDID = agent?.did()
   const [delegations, setDelegations] = useState<Delegation<Capabilities>[]>([])
   const [configuredServiceSigner, setConfiguredServiceSigner] = useState<Ucanto.Signer>()
   useEffect(function () {
@@ -49,37 +63,113 @@ export default function Console () {
       }
     }
   }
+  const hasDelegations = delegations && delegations.length > 0
 
+  const [importError, setImportError] = useState<Error | null>()
+  async function onImport (e: ChangeEvent<HTMLInputElement>): Promise<void> {
+    if (agent) {
+      const input = e.target.files?.[0]
+      if (input === undefined) return
+      let delegation
+      try {
+        delegation = await toDelegation(input)
+      } catch (err) {
+        console.log(err)
+        return
+      }
+      try {
+        await agent.addProof(delegation)
+        setDelegations(agent.proofs())
+      } catch (err) {
+        setImportError(err as Error)
+        console.log(err)
+      }
+    }
+  }
+  const createDelegationCaps = `[
+  { with: '${servicePrincipal?.did()}', can: 'customer/get' },
+  { with: '${servicePrincipal?.did()}', can: 'consumer/get' },
+  { with: '${servicePrincipal?.did()}', can: 'subscription/get' },
+  { with: '${servicePrincipal?.did()}', can: 'rate-limit/*' },
+]`
   return (
     <div className='flex flex-col items-center'>
       {
         agent && (
           <div className='flex flex-col items-center'>
-            <div className='flex flex-row gap-x-1 mb-4'>
-              Agent
-              <span className='w-44 text-ellipsis overflow-hidden'>{name}</span>
+            <div className='flex flex-col items-center gap-x-1 mb-4'>
+              <h3 className='text-2xl font-bold'>Current Agent DID</h3>
+              {agentDID && (
+                <div className='flex flex-row items-center space-x-2'>
+                  <CopyToClipboardButton text={agentDID} />
+                  <span className='w-72 text-ellipsis overflow-hidden'>{agentDID}</span>
+                </div>
+              )}
+              <h3 className='text-2xl font-bold mt-4'>Delegations</h3>
+              {hasDelegations ? delegations.map(delegation => (
+                <div key={delegation.link().toString()}>
+                  <div>Issued by: {delegation.issuer.did()}</div>
+                  {delegation.capabilities.map((capability, i) => (
+                    <div key={i} className='flex flex-col'>
+                      <div>Can: {capability.can}</div>
+                      <div>With: {capability.with}</div>
+                    </div>
+                  ))}
+                </div>
+              )) : (
+                <div className='max-w-xl text-center mt-2'>
+                  You do not currently have any delegations - create or import administrative delegations below.
+                </div>
+              )}
             </div>
-            <div className='flex flex-col space-y-1 items-center'>
-              <input className='w-72 px-2 py-1 text-black focus:outline-0'
+            <div className='flex flex-col items-center my-4'>
+              <h3 className='text-2xl font-bold my-2'>Create Delegation</h3>
+              <div className='max-w-xl flex flex-col items-center'>
+                <h5 className='text-lg'>To create an administrative delegation:</h5>
+                <ol className='list-decimal px-8'>
+                  <li>Ensure this browser window is secure: disable extensions, run in a dedicated profile, and take whatever other steps you need to ensure nobody can extract or observe the private key</li>
+                  <li>Input the service signer's private key and hit "authorize"</li>
+                </ol>
+              </div>
+              <input className='w-72 my-4 px-2 py-1 text-black focus:outline-0'
                 type='password' placeholder='Service Signer Private Key'
                 onChange={onServiceSignerPrivateKeyChange} />
-              <div>Signer Public Key: {serviceSigner?.did()}</div>
               <button className='btn' onClick={authorize} disabled={!canAuthorize}>
                 Authorize
               </button>
             </div>
-            <h3>Delegations</h3>
-            {delegations.map(delegation => (
-              <div key={delegation.link().toString()}>
-                <div>Issued by: {delegation.issuer.did()}</div>
-                {delegation.capabilities.map((capability, i) => (
-                  <div key={i} className='flex flex-col'>
-                    <div>Can: {capability.can}</div>
-                    <div>With: {capability.with}</div>
-                  </div>
-                ))}
+            <div className='flex flex-col items-center my-4'>
+              <h3 className='text-2xl font-bold my-2'>Import Delegation</h3>
+              <div className='max-w-xl flex flex-col items-center'>
+                <h5 className='text-lg'>To import an administrative delegation:</h5>
+                <ol className='list-decimal px-8'>
+                  <li>
+                    Generate a delegation using custom code, granting the following capabilities:
+                    <div className='flex flex-row items-center space-x-2'>
+                      <CopyToClipboardButton text={createDelegationCaps} />
+                      <code className='block bg-gray-500 p-2 my-2 whitespace-pre max-w-2xl overflow-x-scroll'>
+                        {createDelegationCaps}
+                      </code>
+                    </div>
+                  </li>
+                  <li>Import the UCAN using the button below. </li>
+                </ol>
               </div>
-            ))}
+              <label className='btn text-center block w-52 my-4'>
+                Import UCAN
+                <input
+                  type='file'
+                  accept='.ucan,.car,application/vnd.ipfs.car'
+                  className='hidden'
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    void onImport(e)
+                  }}
+                />
+              </label>
+              {importError && (
+                <SimpleError>{importError.message}</SimpleError>
+              )}
+            </div>
           </div>
         )
       }
