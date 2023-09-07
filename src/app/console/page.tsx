@@ -12,7 +12,7 @@ import { importDAG } from '@ucanto/core/delegation'
 import { CopyToClipboardButton } from '@/components/copy'
 import { SimpleError } from '@/components/error'
 
-export async function toDelegation (car: Blob): Promise<Delegation> {
+async function toDelegation (car: Blob): Promise<Delegation> {
   const blocks = []
   const bytes = new Uint8Array(await car.arrayBuffer())
   const reader = await CarReader.fromBytes(bytes)
