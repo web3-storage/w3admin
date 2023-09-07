@@ -128,7 +128,7 @@ export default function Console () {
                 <h5 className='text-lg'>To create an administrative delegation:</h5>
                 <ol className='list-decimal px-8'>
                   <li>Ensure this browser window is secure: disable extensions, run in a dedicated profile, and take whatever other steps you need to ensure nobody can extract or observe the private key</li>
-                  <li>Input the service signer's private key and hit "authorize"</li>
+                  <li>Input the service signer&apos;s private key and hit &ldquo;authorize&rdquo;</li>
                 </ol>
               </div>
               <input className='w-72 my-4 px-2 py-1 text-black focus:outline-0'
