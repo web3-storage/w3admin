@@ -2,6 +2,7 @@
 
 import { useContext, useState, useEffect, ChangeEvent } from 'react'
 import { delegate } from '@ucanto/core'
+import Countdown from 'react-countdown'
 import { useAgent } from "@/hooks/agent"
 import { ServiceContext, } from "@/contexts/service"
 import { Delegation, Capabilities } from '@ucanto/interface'
@@ -27,6 +28,7 @@ export default function Console () {
   const agentDID = agent?.did()
   const [delegations, setDelegations] = useState<Delegation<Capabilities>[]>([])
   const [configuredServiceSigner, setConfiguredServiceSigner] = useState<Ucanto.Signer>()
+  const [expiry, setExpiry] = useState<number>(30)
   useEffect(function () {
     if (agent) {
       setDelegations(agent.proofs())
@@ -48,7 +50,7 @@ export default function Console () {
           { with: servicePrincipal.did(), can: 'subscription/get' },
           { with: servicePrincipal.did(), can: 'rate-limit/*' },
         ],
-        expiration: Math.floor(Date.now() / 1000) + (60 * 30)
+        expiration: Math.floor(Date.now() / 1000) + (60 * expiry)
       })
       await agent.addProof(delegation)
       setDelegations(agent.proofs())
@@ -108,11 +110,24 @@ export default function Console () {
               <h3 className='text-2xl font-bold mt-4'>Delegations</h3>
               {hasDelegations ? delegations.map(delegation => (
                 <div key={delegation.link().toString()}>
-                  <div>Issued by: {delegation.issuer.did()}</div>
+                  <div>
+                    <h3 className='font-bold inline'>issued by: </h3>
+                    {delegation.issuer.did()}
+                  </div>
+                  <div>
+                    <h3 className='font-bold inline'>expires in: </h3>
+                    <Countdown date={delegation.expiration * 1000} />
+                  </div>
                   {delegation.capabilities.map((capability, i) => (
-                    <div key={i} className='flex flex-col'>
-                      <div>Can: {capability.can}</div>
-                      <div>With: {capability.with}</div>
+                    <div key={i} className='flex flex-col m-2 '>
+                      <div>
+                        <h3 className='font-bold inline'>can: </h3>
+                        {capability.can}
+                      </div>
+                      <div>
+                        <h3 className='font-bold inline'>with: </h3>
+                        {capability.with}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -131,9 +146,16 @@ export default function Console () {
                   <li>Input the service signer&apos;s private key and hit &ldquo;authorize&rdquo;</li>
                 </ol>
               </div>
-              <input className='w-72 my-4 px-2 py-1 text-black focus:outline-0'
-                type='password' placeholder='Service Signer Private Key'
-                onChange={onServiceSignerPrivateKeyChange} />
+              <div className='flex flex-col items-start'>
+                <input className='w-72 mt-4 mb-2 px-2 py-1 text-black focus:outline-0'
+                  type='password' placeholder='Service Signer Private Key'
+                  onChange={onServiceSignerPrivateKeyChange} />
+                <label className='mb-4'>
+                  <input className='mr-4 px-2 py-1 text-black w-24' value={expiry} type='number'
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setExpiry(e.target.valueAsNumber)} />
+                  expiry in minutes
+                </label>
+              </div>
               <button className='btn' onClick={authorize} disabled={!canAuthorize}>
                 Authorize
               </button>
