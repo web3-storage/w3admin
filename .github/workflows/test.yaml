@@ -1,11 +1,5 @@
 name: Test
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+on: [workflow_call]
 jobs:
   test:
     name: Test
