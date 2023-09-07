@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "next lint"
+    "test": "next lint",
+    "pages:build": "pnpm dlx @cloudflare/next-on-pages@1",
+    "pages:watch": "pnpm @cloudflare/next-on-pages@1 --watch",
+    "pages:dev": "pnpm wrangler pages dev .vercel/output/static --compatibility-flag=nodejs_compat"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.14",
@@ -43,6 +46,10 @@
     "utf-8-validate": "^6.0.3"
   },
   "devDependencies": {
-    "@types/react-copy-to-clipboard": "^5.0.4"
+    "@cloudflare/next-on-pages": "1",
+    "@types/react-copy-to-clipboard": "^5.0.4",
+    "eslint-plugin-next-on-pages": "^1.6.0",
+    "vercel": "^32.1.0",
+    "wrangler": "^3.7.0"
   }
 }
