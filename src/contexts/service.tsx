@@ -1,16 +1,14 @@
 'use client'
 
-import { useEffect, useState, useContext, createContext } from "react"
-import { ServiceMethod, DID, DIDKey, InferInvokedCapability } from '@ucanto/interface'
+import { useEffect, useState, createContext } from "react"
+import { ServiceMethod, DIDKey, InferInvokedCapability } from '@ucanto/interface'
 import * as Server from '@ucanto/server'
-import * as Signer from '@ucanto/principal/ed25519'
-import * as CAR from '@ucanto/transport/car'
+import { CAR, HTTP } from '@ucanto/transport'
 import * as Ucanto from '@ucanto/interface'
+import * as Signer from '@ucanto/principal/ed25519'
 import { Customer, Consumer, Subscription, RateLimit } from '@web3-storage/capabilities'
 import { webDidFromMailtoDid } from '@/util/did'
 import { spaceOneDid, spaceTwoDid } from '@/util/spaces'
-import { createAgent } from "./agent"
-import { Agent } from "@web3-storage/access"
 import {
   CustomerGetSuccess,
   CustomerGetFailure,
@@ -26,8 +24,9 @@ import {
   RateLimitListFailure,
   RateLimitSubject
 } from "@web3-storage/capabilities/types"
+import { Absentee } from "@ucanto/principal"
 
-export type AccountDID = DID<'mailto'>
+export type AccountDID = Ucanto.DID<'mailto'>
 
 export type Customer = {
   did: AccountDID
@@ -102,7 +101,7 @@ const domains: Record<string, DomainRow> = {
 interface SpaceRow {
   allocated: number
   total: number
-  subscription: DID<'mailto'>
+  subscription: Ucanto.DID<'mailto'>
 }
 
 const spaces: Record<string, SpaceRow> = {
@@ -120,7 +119,7 @@ const spaces: Record<string, SpaceRow> = {
 }
 
 interface SubscriptionRow {
-  customer: DID<'mailto'>
+  customer: Ucanto.DID<'mailto'>
   consumer: DIDKey
 }
 
@@ -142,7 +141,7 @@ interface RateLimitRow {
 
 const rateLimits: RateLimitRow[] = []
 
-export async function createServer (id: Ucanto.Signer) {
+export async function createLocalServer (id: Ucanto.Signer) {
   return Server.create<Service>({
     id,
     service: {
@@ -203,9 +202,7 @@ export async function createServer (id: Ucanto.Signer) {
       },
       'rate-limit': {
         add: Server.provide(RateLimit.add, async ({ capability }) => {
-          console.log(rateLimits)
           rateLimits.push(capability.nb)
-          console.log(rateLimits)
           return { ok: { id: (rateLimits.length - 1).toString() } }
         }),
         remove: Server.provide(RateLimit.remove, async ({ capability }) => {
@@ -231,37 +228,73 @@ export async function createServer (id: Ucanto.Signer) {
   })
 }
 
+const localServicePrincipalPrivateKey = process.env.NEXT_PUBLIC_SERVICE_PRIVATE_KEY
+const localServicePrincipalDid = process.env.NEXT_PUBLIC_SERVICE_DID
+
+async function createLocalService () {
+  const signer = localServicePrincipalPrivateKey ? Signer.parse(localServicePrincipalPrivateKey) : await Signer.generate()
+  const servicePrincipal = signer.withDID(localServicePrincipalDid ? localServicePrincipalDid as Ucanto.DID : 'did:web:dev.web3.storage')
+  return {
+    server: await createLocalServer(servicePrincipal),
+    servicePrincipal
+  }
+}
+
+interface RemoteServiceConfig {
+  name: string
+  local?: false
+  url: Ucanto.URI
+  did: Ucanto.DID
+}
+
+interface LocalServiceConfig {
+  name: string
+  local: true
+}
+
+type ServiceConfig = RemoteServiceConfig | LocalServiceConfig
+
+type ServiceConfigs = Record<string, ServiceConfig>
+
+const staticServiceConfigs: ServiceConfigs = {
+  local: { name: "Local", local: true },
+  travis: { name: "Travis", url: 'https://9bovsbxdii.execute-api.us-west-2.amazonaws.com', did: 'did:web:staging.web3.storage' }
+}
 interface ServiceContextValue {
-  agent?: Agent
-  serverPrincipal?: Ucanto.Signer
-  server?: Ucanto.ServerView<Service>
+  servicePrincipal?: Ucanto.Principal
+  server?: Server.Channel<Service>
 }
 
 export const ServiceContext = createContext<ServiceContextValue>({})
 
 export function ServiceProvider ({ children }: { children: JSX.Element | JSX.Element[] }) {
-  const [serverPrincipal, setServerPrincipal] = useState<Ucanto.Signer>()
-  const [server, setServer] = useState<Ucanto.ServerView<Service>>()
-  const [agent, setAgent] = useState<Agent>()
+  const [servicePrincipal, setServicePrincipal] = useState<Ucanto.Principal>()
+  const [server, setServer] = useState<Server.Channel<Service>>()
   useEffect(function () {
     async function load () {
-      const signer = await Signer.generate()
-      setAgent(await createAgent({ principal: signer, name: 'did:web:test.web3.storage' }))
-      const id = signer.withDID('did:web:test.web3.storage')
-      setServerPrincipal(id)
-      setServer(await createServer(id))
+      if (process.env.NEXT_PUBLIC_USE_LOCAL_SERVICE === 'true') {
+        const { server, servicePrincipal } = await createLocalService()
+        setServicePrincipal(servicePrincipal)
+        setServer(server)
+      } else if (process.env.NEXT_PUBLIC_SERVICE_URL && process.env.NEXT_PUBLIC_SERVICE_DID) {
+        setServicePrincipal(Absentee.from({ id: process.env.NEXT_PUBLIC_SERVICE_DID as Ucanto.DID }))
+        setServer(HTTP.open({
+          url: new URL(process.env.NEXT_PUBLIC_SERVICE_URL),
+          method: 'POST',
+        }))
+      } else {
+        console.error("Service is not configured - please set NEXT_PUBLIC_SERVICE_URL and NEXT_PUBLIC_SERVICE_DID or set NEXT_PUBLIC_USE_LOCAL_SERVICE to 'true'")
+      }
     }
     load()
   }, [])
+  
   return (
-    <ServiceContext.Provider value={{ agent, serverPrincipal, server }}>
+    <ServiceContext.Provider value={{
+      servicePrincipal,
+      server,
+    }}>
       {children}
     </ServiceContext.Provider>
   )
 }
-
-export function useServer () {
-  const { server } = useContext(ServiceContext)
-  return server
-}
-

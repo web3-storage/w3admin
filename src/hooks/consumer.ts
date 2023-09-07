@@ -1,27 +1,27 @@
 import useSWR from 'swr'
-import { DID, Signer } from '@ucanto/interface'
+import { DID } from '@ucanto/interface'
 import { Consumer } from '@web3-storage/capabilities'
-import { useClient } from './service'
+import { useServicePrincipal } from './service'
+import { useAgent } from './agent'
 
 export function useConsumer (did: string | undefined) {
-  const client = useClient()
+  const agent = useAgent()
+  const servicePrincipal = useServicePrincipal()
   return useSWR(
-    (did && client) ? ['consumer/get', did] : null,
-    async ([, did]: [never, string | undefined]) => {
-      if (did && client) {
-        const result = await Consumer.get.invoke({
-          issuer: client.id as Signer,
-          audience: client.id,
-          with: client.id.did() as DID<'web'>,
+    (did && agent && servicePrincipal) ? ['consumer/get', did] : null,
+    async ([, consumer]: [never, string | undefined]) => {
+      if (did && agent && servicePrincipal) {
+        const result = await agent.invokeAndExecute(Consumer.get, {
+          with: servicePrincipal.did() as DID<'web'>,
           nb: {
-            consumer: did as DID<'key'>
+            consumer: consumer as DID<'key'>
           }
-        }).execute(client)
+        })
         if (result.out.ok) {
           return result.out.ok
         } else {
-          console.error('Customer.get failed:', result.out.error)
-          return null
+          console.error('Consumer.get failed:', result.out.error)
+          throw result.out.error
         }
       } else {
         return null

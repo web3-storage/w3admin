@@ -1,5 +1,7 @@
 'use client'
 
+import { Loader } from "@/components/brand"
+import { SimpleError } from "@/components/error"
 import { useConsumer } from "@/hooks/consumer"
 import { useRateLimitActions, useRateLimits } from "@/hooks/rate-limit"
 import { DIDKey } from "@ucanto/interface"
@@ -9,11 +11,13 @@ export const runtime = 'edge'
 
 export default function Space ({ params: { did: encodedDid } }: { params: { did: string } }) {
   const did = decodeURIComponent(encodedDid)
-  const { data: space, error } = useConsumer(did as DIDKey)
+  const { data: space, error, isLoading } = useConsumer(did as DIDKey)
   const { addBlock, removeBlock, blocked } = useRateLimitActions(did)
   return (
     <div className='flex flex-col items-center'>
       <h2 className='text-2xl mb-4'>Space {did}</h2>
+      {isLoading && <Loader />}
+      {error && <SimpleError>{error.message}</SimpleError>}
       {space && (
         <>
           <button className='rounded bg-gray-500 px-2 py-1 hover:bg-gray-600 active:bg-gray-400'
@@ -45,9 +49,6 @@ export default function Space ({ params: { did: encodedDid } }: { params: { did:
             </tbody>
           </table>
         </>
-      )}
-      {error && (
-        <h3 className='text-lg'>{error.message}</h3>
       )}
     </div>
   )

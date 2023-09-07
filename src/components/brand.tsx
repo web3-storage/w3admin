@@ -1,7 +1,3 @@
-import Image from "next/image"
-
-export const serviceName = process.env.NEXT_PUBLIC_W3UP_SERVICE_BRAND_NAME || 'dev.web3.storage'
-export const tosUrl = process.env.NEXT_PUBLIC_W3UP_PROVIDER == 'did:web:nft.storage' ? 'https://nft.storage/terms' : 'https://web3.storage/terms'
 export const Web3StorageLogoIcon = () => (
   <svg
     width='30'
@@ -19,15 +15,8 @@ export const Web3StorageLogoIcon = () => (
   </svg>
 )
 
-export const NFTStorageLogo = ({ className = '' }: { className?: string }) => (
-  <Image className={className} src='nft-storage.svg' alt='NFT.storage logo'/>
-)
+export const Logo = () => <Web3StorageLogoIcon />
 
-export const Web3StorageLogo = () => (
-  <div className='font-bold flex flex-row justify-center items-center gap-2'>
-    <Web3StorageLogoIcon />
-    <span>console</span>
-  </div>
-)
+export const Loader = () => <div className='animate-spin'><Logo/></div>
 
-export const Logo = process.env.NEXT_PUBLIC_W3UP_PROVIDER == 'did:web:nft.storage' ? NFTStorageLogo : Web3StorageLogo
+
