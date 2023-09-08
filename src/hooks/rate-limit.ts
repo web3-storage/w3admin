@@ -59,10 +59,9 @@ export function useRateLimitActions (subject: string | undefined) {
 }
 
 export function useRateLimits (subject: string | undefined) {
-  const client = useClient()
   const agent = useAgent()
   const servicePrincipal = useServicePrincipal()
-  return useSWR((subject && client) ? ['rate-limit/list', subject] : null,
+  return useSWR((subject && agent && servicePrincipal) ? ['rate-limit/list', subject] : null,
     async ([, subject]: [never, DID<'web'> | undefined]) => {
       if (subject && agent && servicePrincipal) {
         const result = await agent.invokeAndExecute(RateLimit.list, {
