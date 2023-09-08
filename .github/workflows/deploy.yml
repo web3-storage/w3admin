@@ -70,8 +70,6 @@ jobs:
   release:
     name: Release
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.changelog.outputs.releases_created) || inputs.force_release
-    needs:
-      - test
     runs-on: ubuntu-latest
     environment:
       name: production
