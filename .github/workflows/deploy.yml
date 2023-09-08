@@ -4,17 +4,15 @@ on:
     branches:
       - main
   pull_request:
+    branches:
+      - main
 jobs:
   test:
-    name: Test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/pnpm
-      - run: pnpm lint
-      - run: pnpm test      
+    uses: ./.github/workflows/test.yml
   preview:
     name: Preview
+    needs:
+      - test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -70,8 +68,10 @@ jobs:
           monorepo-tags: true
           changelog-types: '[{"type":"feat","section":"Features","hidden":false},{"type":"fix","section":"Bug Fixes","hidden":false},{"type":"chore","section":"Other Changes","hidden":false}]'
   release:
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.changelog.outputs.releases_created) || inputs.force_release
     name: Release
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.changelog.outputs.releases_created) || inputs.force_release
+    needs:
+      - test
     runs-on: ubuntu-latest
     environment:
       name: production
