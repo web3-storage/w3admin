@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/web3-storage/w3admin/compare/w3admin-v1.0.0...w3admin-v1.1.0) (2023-09-08)
+
+
+### Features
+
+* enable users to customize delegation expiry ([#5](https://github.com/web3-storage/w3admin/issues/5)) ([1bea39c](https://github.com/web3-storage/w3admin/commit/1bea39c20a22bb91a5ac05b576796b5afe85f6f1))
+* enable users to customize delegation expiry ([#6](https://github.com/web3-storage/w3admin/issues/6)) ([ecbe6dc](https://github.com/web3-storage/w3admin/commit/ecbe6dc10f613ee58d12f66869cb5cc6d916cc4a))
+
+
+### Bug Fixes
+
+* bug in rate limits hook ([#8](https://github.com/web3-storage/w3admin/issues/8)) ([b99c68b](https://github.com/web3-storage/w3admin/commit/b99c68ba3eceb2e0247407b6f5dad5d9a3bfa73d))
+* workflow file ([#9](https://github.com/web3-storage/w3admin/issues/9)) ([fdd17c5](https://github.com/web3-storage/w3admin/commit/fdd17c54c2cf184115aa749adf6ee18009d53a9e))
+
 ## 1.0.0 (2023-09-07)
 
 
