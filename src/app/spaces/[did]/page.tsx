@@ -32,7 +32,7 @@ export default function Space ({ params: { did: encodedDid } }: { params: { did:
               </tr>
               <tr>
                 <td className='font-bold'>Total</td>
-                <td className='text-right'>{space.total}</td>
+                <td className='text-right'>{space.limit}</td>
               </tr>
               <tr>
                 <td className='font-bold'>Subscription</td>

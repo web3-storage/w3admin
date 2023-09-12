@@ -120,20 +120,20 @@ const domains: Record<string, DomainRow> = {
 
 interface SpaceRow {
   allocated: number
-  total: number
+  limit: number
   subscription: Ucanto.DID<'mailto'>
 }
 
 const spaces: Record<string, SpaceRow> = {
   [spaceOneDid]: {
     allocated: 345093845,
-    total: 1000000000,
+    limit: 1000000000,
     subscription: 'did:mailto:example.com:travis@test',
   },
 
   [spaceTwoDid]: {
     allocated: 9386794576,
-    total: 1500000000,
+    limit: 1500000000,
     subscription: 'did:mailto:dag.house:travis@test',
   }
 }
