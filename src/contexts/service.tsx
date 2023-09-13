@@ -6,7 +6,7 @@ import * as Server from '@ucanto/server'
 import { CAR, HTTP } from '@ucanto/transport'
 import * as Ucanto from '@ucanto/interface'
 import * as Signer from '@ucanto/principal/ed25519'
-import { Customer, Consumer, Subscription, RateLimit } from '@web3-storage/capabilities'
+import { Admin, Customer, Consumer, Subscription, RateLimit } from '@web3-storage/capabilities'
 import { webDidFromMailtoDid } from '@/util/did'
 import { spaceOneDid, spaceTwoDid } from '@/util/spaces'
 import {
@@ -22,7 +22,11 @@ import {
   RateLimitRemoveFailure,
   RateLimitListSuccess,
   RateLimitListFailure,
-  RateLimitSubject
+  RateLimitSubject,
+  AdminUploadInspectSuccess,
+  AdminUploadInspectFailure,
+  AdminStoreInspectSuccess,
+  AdminStoreInspectFailure
 } from "@web3-storage/capabilities/types"
 import { Absentee } from "@ucanto/principal"
 
@@ -73,6 +77,22 @@ export interface Service {
       RateLimitListSuccess,
       RateLimitListFailure
     >
+  },
+  admin: {
+    upload: {
+      inspect: ServiceMethod<
+        InferInvokedCapability<typeof Admin.upload.inspect>,
+        AdminUploadInspectSuccess,
+        AdminUploadInspectFailure
+      >
+    },
+    store: {
+      inspect: ServiceMethod<
+        InferInvokedCapability<typeof Admin.store.inspect>,
+        AdminStoreInspectSuccess,
+        AdminStoreInspectFailure
+      >
+    }
   }
 }
 
@@ -222,6 +242,26 @@ export async function createLocalServer (id: Ucanto.Signer) {
             }
           }
         }),
+      },
+      admin: {
+        store: {
+          inspect: Server.provide(Admin.store.inspect, async ({}) => {
+            return {
+              ok: {
+                spaces: []
+              }
+            }
+          })
+        },
+        upload: {
+          inspect: Server.provide(Admin.upload.inspect, async ({}) => {
+            return {
+              ok: {
+                spaces: []
+              }
+            }
+          })
+        }
       }
     },
     codec: CAR.inbound
@@ -288,7 +328,7 @@ export function ServiceProvider ({ children }: { children: JSX.Element | JSX.Ele
     }
     load()
   }, [])
-  
+
   return (
     <ServiceContext.Provider value={{
       servicePrincipal,
