@@ -49,6 +49,7 @@ export default function Console () {
           { with: servicePrincipal.did(), can: 'consumer/get' },
           { with: servicePrincipal.did(), can: 'subscription/get' },
           { with: servicePrincipal.did(), can: 'rate-limit/*' },
+          { with: servicePrincipal.did(), can: 'admin/*' },
         ],
         expiration: Math.floor(Date.now() / 1000) + (60 * expiry)
       })
