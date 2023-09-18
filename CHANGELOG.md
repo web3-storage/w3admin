@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/web3-storage/w3admin/compare/w3admin-v1.1.0...w3admin-v1.2.0) (2023-09-18)
+
+
+### Features
+
+* implement CID lookup UI ([#10](https://github.com/web3-storage/w3admin/issues/10)) ([66c209d](https://github.com/web3-storage/w3admin/commit/66c209d34bcdbb130aac45423856b2c91c14b1ff))
+
 ## [1.1.0](https://github.com/web3-storage/w3admin/compare/w3admin-v1.0.0...w3admin-v1.1.0) (2023-09-08)
 
 
