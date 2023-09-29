@@ -8,6 +8,7 @@ import { useCustomer } from "@/hooks/customer"
 import { useRateLimitActions } from "@/hooks/rate-limit"
 import { SimpleError } from "@/components/error"
 import { Loader } from "@/components/brand"
+import { EmailAddress } from "@web3-storage/did-mailto/dist/src/types"
 
 export const runtime = 'edge'
 
@@ -18,8 +19,15 @@ function domainFromEmail (email: string) {
 
 function mailtoDidFromUrlComponent (urlComponent: string) {
   try {
-    return DidMailto.fromString(decodeURIComponent(urlComponent))
-  } catch {
+    // This is surprisingly tricky - any URL-encoded characters in the email address will
+    // be decoded by decodeURIComponent, but we want to preserve the URL-encoding in the email
+    // address. To solve this, we pull the email address out after parsing the DID and re-encode it
+    // before recreating the DID in the return value.
+    const decodedMailtoDID = DidMailto.fromString(decodeURIComponent(urlComponent))
+    const urlEncodedEmail = encodeURI(DidMailto.toEmail(decodedMailtoDID))
+    return DidMailto.fromEmail(urlEncodedEmail as EmailAddress)
+  } catch (e) {
+    console.log("failed to parse mailto DID from URL", urlComponent, e)
     return undefined
   }
 }
