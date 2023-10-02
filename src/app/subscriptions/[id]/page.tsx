@@ -21,8 +21,8 @@ export default function Subscription ({ params: { id: encodedId } }: { params: {
             <tr>
               <td className='font-bold'>Customer</td>
               <td>
-                <Link className='underline text-blue-200' href={`/customers/${subscription.customer}`}>
-                  {subscription.customer}
+                <Link className='underline text-blue-200' href={`/customers/${encodeURIComponent(subscription.customer)}`}>
+                  {decodeURIComponent(subscription.customer)}
                 </Link>
               </td>
             </tr>

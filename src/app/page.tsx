@@ -18,7 +18,7 @@ export default function Root () {
   const goToCustomer = useCallback((e: FormEvent) => {
     e.preventDefault()
     if (customerEmail) {
-      router.push(`/customers/${MailtoDid.fromEmail(customerEmail)}`)
+      router.push(`/customers/${encodeURIComponent(MailtoDid.fromEmail(customerEmail))}`)
     }
   }, [router, customerEmail])
   const [cid, setCid] = useState<string | undefined>()
