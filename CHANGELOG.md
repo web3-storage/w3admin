@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/web3-storage/w3admin/compare/w3admin-v1.2.0...w3admin-v1.2.1) (2024-01-05)
+
+
+### Bug Fixes
+
+* handle email addresses with a + in them ([#12](https://github.com/web3-storage/w3admin/issues/12)) ([5a0a32b](https://github.com/web3-storage/w3admin/commit/5a0a32b7e7fb5a8e0c35a043f1a5cdaccec84718))
+
 ## [1.2.0](https://github.com/web3-storage/w3admin/compare/w3admin-v1.1.0...w3admin-v1.2.0) (2023-09-18)
 
 
