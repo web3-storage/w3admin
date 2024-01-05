@@ -38,7 +38,7 @@ export default function Customer ({ params: { did: encodedDid } }: { params: { d
       <div className='flex flex-col items-center'>
         <h2 className='text-2xl mb-4'>Customer {did}</h2>
         {isLoading && <Loader />}
-        {error && <SimpleError>{error.toString()}</SimpleError>}
+        {error && <SimpleError>{error.message?.toString() || `Error loading ${did}`}</SimpleError>}
         {customer && (
           <div className='flex flex-col items-center'>
             <div className='flex flex-row space-x-2 mt-4 mb-2'>
